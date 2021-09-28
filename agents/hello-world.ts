@@ -1,8 +1,8 @@
-import { Agent, GameState } from './lux/Agent'
-import GAME_CONSTANTS from './lux/game_constants.json'
-import { Cell } from './lux/Cell'
-import { City } from './lux/City'
-import { CityTile } from './lux/CityTile'
+import { Agent, GameState } from '../lux/Agent'
+import GAME_CONSTANTS from '../lux/game_constants.json'
+import { Cell } from '../lux/Cell'
+import { City } from '../lux/City'
+import { CityTile } from '../lux/CityTile'
 
 // any state can be stored between ticks by defining variable here
 // note that game objects are recreated every tick so make sure to update them
