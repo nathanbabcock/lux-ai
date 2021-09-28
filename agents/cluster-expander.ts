@@ -1,13 +1,30 @@
-import { getClosestEmptyTile, getClosestResourceTile, moveWithCollisionAvoidance } from '../helpers/helpers'
+import Cluster, { getClusters } from '../helpers/Cluster'
+import { getCityTiles, getClosestEmptyTile, getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
+import { clearLog, log } from '../helpers/logging'
+import { chooseRandom } from '../helpers/util'
 import { Agent, GameState } from '../lux/Agent'
-import { Cell } from '../lux/Cell'
 import type { Position } from '../lux/Position'
 import type { Unit } from '../lux/Unit'
 
-function buildCityWithCollisionAvoidance(gameState: GameState, unit: Unit, actions: Array<string>, otherUnitMoves: Array<Position>) {
+function expandToNewCluster(gameState: GameState, unit: Unit, actions: Array<string>, otherUnitMoves: Array<Position>) {
   const player = gameState.players[gameState.id]
+  const clusters = getClusters(gameState.map)
+  log('clusters:', clusters.length)
+  let destCluster: Cluster
 
-  const closestEmptyTile = getClosestEmptyTile(gameState.map, unit.pos)
+  const emptyClusters = clusters.filter(cluster => cluster.getCityTiles(clusters, getCityTiles(player)).length === 0)
+  if (emptyClusters.length === 0)
+    destCluster = chooseRandom(clusters)
+  else
+    destCluster = chooseRandom(emptyClusters)
+
+  if (!destCluster) {
+    console.warn(`Couldn't find cluster to go to`)
+    moveWithCollisionAvoidance(gameState, unit, 'center', otherUnitMoves, actions)
+    return
+  }
+
+  const closestEmptyTile = getClosestEmptyTile(gameState.map, destCluster.cells[0].pos)
   if (!closestEmptyTile) return console.warn('no empty tile found')
 
   if (unit.pos.distanceTo(closestEmptyTile.pos) === 0) {
@@ -18,6 +35,9 @@ function buildCityWithCollisionAvoidance(gameState: GameState, unit: Unit, actio
   }
 }
 
+clearLog()
+log('Cluster Expander Agent')
+
 const agent = new Agent()
 agent.run((gameState: GameState): Array<string> => {
   const actions = new Array<string>()
@@ -26,16 +46,7 @@ agent.run((gameState: GameState): Array<string> => {
   const player = gameState.players[gameState.id]
   const opponent = gameState.players[(gameState.id + 1) % 2]
   const gameMap = gameState.map
-
-  const resourceTiles: Array<Cell> = []
-  for (let y = 0; y < gameMap.height; y++) {
-    for (let x = 0; x < gameMap.width; x++) {
-      const cell = gameMap.getCell(x, y)
-      if (cell.hasResource()) {
-        resourceTiles.push(cell)
-      }
-    }
-  }
+  const resourceTiles = getResources(gameState.map)
   
   // we iterate over all our units and do something with them
   for (let i = 0; i < player.units.length; i++) {
@@ -50,9 +61,7 @@ agent.run((gameState: GameState): Array<string> => {
           moveWithCollisionAvoidance(gameState, unit, dir, otherUnitMoves, actions)
         }
       } else {
-        // if the unit is a worker and we have no space in cargo, lets return to our cities
-        // goHome(player, unit, actions)
-        buildCityWithCollisionAvoidance(gameState, unit, actions, otherUnitMoves)
+        expandToNewCluster(gameState, unit, actions, otherUnitMoves)
       }
     }
   }

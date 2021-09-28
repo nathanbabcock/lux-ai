@@ -25,7 +25,7 @@ export function getClosestResourceTile(resourceTiles: Array<Cell>, player: Playe
   return closestResourceTile
 }
 
-export function getClosestEmptyTile(gameMap: GameMap, unit: Unit): Cell | null {
+export function getClosestEmptyTile(gameMap: GameMap, pos: Position): Cell | null {
   const emptyTiles: Array<Cell> = []
   for (let y = 0; y < gameMap.height; y++) {
     for (let x = 0; x < gameMap.width; x++) {
@@ -39,7 +39,7 @@ export function getClosestEmptyTile(gameMap: GameMap, unit: Unit): Cell | null {
   let closestEmptyTile: Cell = null
   let closestDist = 9999999
   emptyTiles.forEach((cell) => {
-    const dist = cell.pos.distanceTo(unit.pos)
+    const dist = cell.pos.distanceTo(pos)
     if (dist < closestDist) {
       closestDist = dist
       closestEmptyTile = cell
@@ -74,7 +74,7 @@ export function goHome(player: Player, unit: Unit, actions: Array<string>) {
 export function buildCity(gameState: GameState, unit: Unit, actions: Array<string>) {
   const player = gameState.players[gameState.id]
 
-  const closestEmptyTile = getClosestEmptyTile(gameState.map, unit)
+  const closestEmptyTile = getClosestEmptyTile(gameState.map, unit.pos)
   if (!closestEmptyTile) return console.warn('no empty tile found')
 
   if (unit.pos.distanceTo(closestEmptyTile.pos) === 0) {
@@ -94,4 +94,23 @@ export function moveWithCollisionAvoidance(gameState: GameState, unit: Unit, dir
     otherUnitMoves.push(destination)
     actions.push(unit.move(dir))
   }
+}
+
+export function getCityTiles(player: Player) {
+  const cityTiles: Array<CityTile> = []
+  player.cities.forEach(city => cityTiles.push(...city.citytiles))
+  return cityTiles
+}
+
+export function getResources(gameMap: GameMap): Array<Cell> {
+  const resourceTiles: Array<Cell> = []
+  for (let y = 0; y < gameMap.height; y++) {
+    for (let x = 0; x < gameMap.width; x++) {
+      const cell = gameMap.getCell(x, y)
+      if (cell.hasResource()) {
+        resourceTiles.push(cell)
+      }
+    }
+  }
+  return resourceTiles
 }
