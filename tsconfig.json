@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "CommonJS",
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
     "target": "es5",
     "moduleResolution": "node",
     "experimentalDecorators": true,
