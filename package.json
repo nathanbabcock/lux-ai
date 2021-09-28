@@ -7,9 +7,9 @@
     "start": "npm run build && npm run sim && npm run vis",
     "build": "tsc",
     "watch": "tsc -w",
-    "sim": "lux-ai-2021 dist/agents/hello-world.js dist/agents/naive-city-builder.js --out=replays/replay.json",
-    "vis-old": "cp replays/replay.json ../Lux-Viewer-2021/dist/replay.json && concurrently \"http-server ../Lux-Viewer-2021/dist\" \"wait-on http://localhost:8080 && node dist/vis.js\"",
-    "vis": "lux-ai-vis replays/replay.json"
+    "sim": "lux-ai-2021 dist/agents/hello-world.js dist/agents/naive-collision-avoidance.js --out=replays/replay.json",
+    "vis": "lux-ai-vis replays/replay.json",
+    "sim-vis": "npm run sim && npm run vis"
   },
   "author": "Nathan Babcock",
   "license": "UNLICENSED",

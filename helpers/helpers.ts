@@ -5,29 +5,8 @@ import { CityTile } from '../lux/CityTile'
 import type { GameMap } from '../lux/GameMap'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import type { Player } from '../lux/Player'
+import { Position } from '../lux/Position'
 import type { Unit } from '../lux/Unit'
-
-export function goHome(player: Player, unit: Unit, actions: Array<string>) {
-  // if unit is a worker and there is no cargo space left, and we have cities, lets return to them
-  if (player.cities.size > 0) {
-    const city: City = player.cities.values().next().value
-    let closestDist = 999999
-    let closestCityTile: CityTile = null
-
-    city.citytiles.forEach((citytile) => {
-      const dist = citytile.pos.distanceTo(unit.pos)
-      if (dist < closestDist) {
-        closestCityTile = citytile
-        closestDist = dist
-      }
-    })
-
-    if (closestCityTile != null) {
-      const dir = unit.pos.directionTo(closestCityTile.pos)
-      actions.push(unit.move(dir))
-    }
-  }
-}
 
 export function getClosestResourceTile(resourceTiles: Array<Cell>, player: Player, unit: Unit): Cell | null {
   // if the unit is a worker and we have space in cargo, lets find the nearest resource tile and try to mine it
@@ -70,6 +49,28 @@ export function getClosestEmptyTile(gameMap: GameMap, unit: Unit): Cell | null {
   return closestEmptyTile
 }
 
+export function goHome(player: Player, unit: Unit, actions: Array<string>) {
+  // if unit is a worker and there is no cargo space left, and we have cities, lets return to them
+  if (player.cities.size > 0) {
+    const city: City = player.cities.values().next().value
+    let closestDist = 999999
+    let closestCityTile: CityTile = null
+
+    city.citytiles.forEach((citytile) => {
+      const dist = citytile.pos.distanceTo(unit.pos)
+      if (dist < closestDist) {
+        closestCityTile = citytile
+        closestDist = dist
+      }
+    })
+
+    if (closestCityTile != null) {
+      const dir = unit.pos.directionTo(closestCityTile.pos)
+      actions.push(unit.move(dir))
+    }
+  }
+}
+
 export function buildCity(gameState: GameState, unit: Unit, actions: Array<string>) {
   const player = gameState.players[gameState.id]
 
@@ -80,6 +81,17 @@ export function buildCity(gameState: GameState, unit: Unit, actions: Array<strin
     actions.push(unit.buildCity())
   } else {
     const dir = unit.pos.directionTo(closestEmptyTile.pos)
+    actions.push(unit.move(dir))
+  }
+}
+
+export function moveWithCollisionAvoidance(gameState: GameState, unit: Unit, dir: string, otherUnitMoves: Array<Position>, actions: Array<string>) {
+  const destination = unit.pos.translate(dir, 1)
+  if (otherUnitMoves.some((pos) => pos.equals(destination))) {
+    otherUnitMoves.push(unit.pos)
+    actions.push(unit.move('center'))
+  } else {
+    otherUnitMoves.push(destination)
     actions.push(unit.move(dir))
   }
 }
