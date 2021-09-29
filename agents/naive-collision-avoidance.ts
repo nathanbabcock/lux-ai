@@ -1,4 +1,5 @@
 import { getClosestEmptyTile, getClosestResourceTile, moveWithCollisionAvoidance } from '../helpers/helpers'
+import { log } from '../helpers/logging'
 import { Agent, GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import type { Position } from '../lux/Position'
@@ -8,7 +9,7 @@ function buildCityWithCollisionAvoidance(gameState: GameState, unit: Unit, actio
   const player = gameState.players[gameState.id]
 
   const closestEmptyTile = getClosestEmptyTile(gameState.map, unit.pos)
-  if (!closestEmptyTile) return console.warn('no empty tile found')
+  if (!closestEmptyTile) log('no empty tile found')
 
   if (unit.pos.distanceTo(closestEmptyTile.pos) === 0) {
     actions.push(unit.buildCity())

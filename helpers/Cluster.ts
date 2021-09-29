@@ -46,5 +46,8 @@ export function getClusters(map: GameMap) {
     }
     cluster.cells.push(cell)
   }
+
+  // TODO: merge clusters
+
   return clusters
 }
