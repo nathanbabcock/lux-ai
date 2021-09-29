@@ -1,4 +1,4 @@
-import Cluster, { getClusters } from '../helpers/Cluster'
+import Cluster, { getClosestCluster, getClusters } from '../helpers/Cluster'
 import { getCityTiles, getClosestEmptyTile, getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import { chooseRandom } from '../helpers/util'
@@ -9,23 +9,22 @@ import type { Unit } from '../lux/Unit'
 function expandToNewCluster(gameState: GameState, unit: Unit, actions: Array<string>, otherUnitMoves: Array<Position>) {
   const player = gameState.players[gameState.id]
   const clusters = getClusters(gameState.map)
-  log('clusters:', clusters.length)
   let destCluster: Cluster
 
   const emptyClusters = clusters.filter(cluster => cluster.getCityTiles(clusters, getCityTiles(player)).length === 0)
   if (emptyClusters.length === 0)
-    destCluster = chooseRandom(clusters)
+    destCluster = getClosestCluster(clusters, unit.pos)
   else
-    destCluster = chooseRandom(emptyClusters)
+    destCluster = getClosestCluster(emptyClusters, unit.pos)
 
   if (!destCluster) {
-    console.warn(`Couldn't find cluster to go to`)
+    log(`Couldn't find cluster to go to`)
     moveWithCollisionAvoidance(gameState, unit, 'center', otherUnitMoves, actions)
     return
   }
 
   const closestEmptyTile = getClosestEmptyTile(gameState.map, destCluster.cells[0].pos)
-  if (!closestEmptyTile) return console.warn('no empty tile found')
+  if (!closestEmptyTile) return log('no empty tile found')
 
   if (unit.pos.distanceTo(closestEmptyTile.pos) === 0) {
     actions.push(unit.buildCity())
