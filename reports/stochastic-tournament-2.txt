@@ -1,0 +1,19 @@
+-=-=-=-=-=-=-=-=-=-=-=-|  Lux AI Season 1 Tournament |-=-=-=-=-=-=-=-=-=-=-=-
+
+Tournament - ID: 117qZ3, Name: Lux AI Season 1 Tournament | Dimension - ID: 
+ukNriS, Name: Lux
+Status: running | Competitors: 6 | Rank System: elo
+
+Total Matches: 202 | Matches Queued: 1
+Name                           | ID              | ELO Score       | Matches 
+dist/agents/stochastic-0.js    | KtigxTjtWxjr    | 2194            | 81     
+
+dist/agents/stochastic-0.01.js | eK96KXsZrgIY    | 1462            | 73     
+
+dist/agents/stochastic-0.02.js | eqSBQMTB38E3    | 800             | 66     
+
+dist/agents/stochastic-0.03.js | Ki1yYFBN8yRq    | 730             | 59     
+
+dist/agents/stochastic-0.04.js | FFXrhZEOgvid    | 447             | 63     
+
+dist/agents/stochastic-0.05.js | yWYl7agcqw4k    | 367             | 62     
