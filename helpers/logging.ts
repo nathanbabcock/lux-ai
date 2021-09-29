@@ -3,7 +3,9 @@ import { appendFileSync, unlinkSync } from 'fs'
 const LOG_FILE = '../../replays/log.txt'
 
 export function clearLog() {
-  unlinkSync(LOG_FILE)
+  try {
+    unlinkSync(LOG_FILE)
+  } catch (e) {}
 }
 
 export function log(...messages: any[]) {

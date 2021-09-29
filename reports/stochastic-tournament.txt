@@ -1,0 +1,28 @@
+-=-=-=-=-=-=-=-=-=-=-=-|  Lux AI Season 1 Tournament |-=-=-=-=-=-=-=-=-=-=-=-
+
+Tournament - ID: hX2euf, Name: Lux AI Season 1 Tournament | Dimension - ID: 
+3swSZb, Name: Lux
+Status: running | Competitors: 15 | Rank System: elo
+
+Total Matches: 3037 | Matches Queued: 7
+Name                           | ID              | ELO Score       | Matches 
+dist/agents/stochastic-0.01.js | pJnVXDNSaT7f    | 9578            | 385    
+
+dist/agents/stochastic-0.05.js | YueuAF4USU16    | 8040            | 405    
+
+dist/agents/stochastic-0.js    | jWgguxx9idQo    | 7558            | 454    
+
+dist/agents/stochastic-0.1.js  | QYfrlRYqDpej    | 5593            | 509    
+
+dist/agents/stochastic-0.2.js  | dnoGsYaw2Gbm    | 5171            | 526    
+
+dist/agents/stochastic-0.3.js  | hQUsmF3wYm73    | 3843            | 591    
+dist/agents/stochastic-0.4.js  | K9oZedhzWrbN    | 193             | 481    
+dist/agents/stochastic-0.5.js  | 8adjREE70pov    | -2809           | 380    
+dist/agents/stochastic-0.99.js | MUA5RfmjvIWw    | -2893           | 320    
+dist/agents/stochastic-1.js    | Xx2PtxN9uByP    | -3036           | 371    
+dist/agents/stochastic-0.9.js  | XHY50Q8Cdipl    | -3096           | 298    
+dist/agents/stochastic-0.7.js  | 0IprgyrU3k4m    | -3101           | 356    
+dist/agents/stochastic-0.6.js  | 0LBam9hVk8SR    | -3119           | 373    
+dist/agents/stochastic-0.95.js | 91xSvVuaUyG0    | -3134           | 338    
+dist/agents/stochastic-0.8.js  | xhqhmvo6r2Bb    | -3788           | 287    
