@@ -88,11 +88,44 @@ export function buildCity(gameState: GameState, unit: Unit, actions: Array<strin
 export function moveWithCollisionAvoidance(gameState: GameState, unit: Unit, dir: string, otherUnitMoves: Array<Position>, actions: Array<string>) {
   const destination = unit.pos.translate(dir, 1)
   if (otherUnitMoves.some((pos) => pos.equals(destination))) {
+    // Try to go around
+    if (sidestep(unit, dir, otherUnitMoves, actions)) return
+
+    // Otherwise stay where you are (never go backwards)
     otherUnitMoves.push(unit.pos)
     actions.push(unit.move('center'))
   } else {
     otherUnitMoves.push(destination)
     actions.push(unit.move(dir))
+  }
+}
+
+export function sidestep(unit: Unit, dir: string, otherUnitMoves: Array<Position>, actions: Array<string>): boolean {
+  // Move perpendicular if you're blocked
+  const alternatives = getPerpendicularDirections(dir)
+  for (let i = 0; i < alternatives.length; i++) {
+    const alternative = alternatives[i]
+    const alternativeDestination = unit.pos.translate(alternative, 1)
+    if (!otherUnitMoves.some((pos) => pos.equals(alternativeDestination))) {
+      otherUnitMoves.push(alternativeDestination)
+      actions.push(unit.move(alternative))
+      return true
+    }
+  }
+  return false
+}
+
+export function getPerpendicularDirections(dir: string): string[] {
+  switch (dir) {
+    case GAME_CONSTANTS.DIRECTIONS.NORTH:
+    case GAME_CONSTANTS.DIRECTIONS.SOUTH:
+      return [GAME_CONSTANTS.DIRECTIONS.EAST, GAME_CONSTANTS.DIRECTIONS.WEST]
+    case GAME_CONSTANTS.DIRECTIONS.EAST:
+    case GAME_CONSTANTS.DIRECTIONS.WEST:
+      return [GAME_CONSTANTS.DIRECTIONS.NORTH, GAME_CONSTANTS.DIRECTIONS.SOUTH]
+    case GAME_CONSTANTS.DIRECTIONS.CENTER:
+    default:
+      return [GAME_CONSTANTS.DIRECTIONS.CENTER]
   }
 }
 
