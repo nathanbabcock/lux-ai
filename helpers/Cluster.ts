@@ -4,6 +4,7 @@ import { GameMap } from '../lux/GameMap'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import { getResources } from './helpers'
+import { log } from './logging'
 
 export default class Cluster {
   public cells: Cell[] = []
@@ -48,6 +49,19 @@ export function getClusters(map: GameMap) {
   }
 
   // TODO: merge clusters
+  outer: while (true) {
+    for (let i = 0; i < clusters.length; i++) {
+      const cluster = clusters[i]
+      const connected = clusters.find(cluster2 => cluster !== cluster2 && cluster.cells.some(cell => cluster2.cells.some(cell2 => cell2.pos.isAdjacent(cell.pos))))
+      if (connected) {
+        cluster.cells.push(...connected.cells)
+        clusters.splice(clusters.indexOf(connected), 1)
+        continue outer
+      }
+    }
+
+    break
+  }
 
   return clusters
 }
