@@ -7,7 +7,7 @@
     "start": "npm run build && npm run sim && npm run vis",
     "build": "tsc",
     "watch": "tsc -w",
-    "sim": "lux-ai-2021 dist/agents/naive-collision-avoidance.js dist/agents/cluster-expander.js --out=replays/replay.json",
+    "sim": "lux-ai-2021 dist/agents/naive-collision-avoidance.js dist/agents/director.js --out=replays/replay.json",
     "vis": "lux-ai-vis replays/replay.json",
     "sim-vis": "npm run sim && npm run vis"
   },
