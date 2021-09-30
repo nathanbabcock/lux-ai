@@ -186,12 +186,14 @@ export class Agent {
     console.log('D_FINISH');
   }
 
-  public async run(loop: (gameState: GameState) => Array<string>): Promise<void> {
+  public async run(loop: (gameState: GameState) => Promise<Array<string>> | Array<string>): Promise<void> {
     await this.initialize();
     while (true) {
       await this.update();
       try {
-        const actions = loop(this.gameState);
+        let actions = loop(this.gameState);
+        if (actions instanceof Promise)
+          actions = await actions; // unwrap the promise
         console.log(actions.join(","));
       } catch (err) {
         console.log(err);
