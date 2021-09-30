@@ -2,16 +2,46 @@ import { Match } from 'dimensions-ai'
 import { getClusters } from '../helpers/Cluster'
 import Director from '../helpers/Director'
 import getSerializedState from '../helpers/getSerializedState'
-import { getResources } from '../helpers/helpers'
+import { getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
-import { initMatch, treeSearch } from '../helpers/TreeSearch'
+import { firstCityTreeSearch, initMatch } from '../helpers/TreeSearch'
 import { Agent, GameState } from '../lux/Agent'
+import { Cell } from '../lux/Cell'
+import { Player } from '../lux/Player'
 import type { Position } from '../lux/Position'
+import { Unit } from '../lux/Unit'
+
+//// HELPERS
+function gatherClosestResource(resourceTiles: Cell[], player: Player, unit: Unit, gameState: GameState, otherUnitMoves: Position[], actions: string[]) {
+  let closestResourceTile = director.getClosestResourceTile(resourceTiles, player, unit)
+  if (closestResourceTile === null) closestResourceTile = getClosestResourceTile(resourceTiles, player, unit)
+  if (closestResourceTile === null) return
+  director.resourcePlans.push(closestResourceTile.pos)
+  const dir = unit.pos.directionTo(closestResourceTile.pos)
+  moveWithCollisionAvoidance(gameState, unit, dir, otherUnitMoves, actions)
+}
+
+function buildClosestCity(gameState: GameState, unit: Unit, otherUnitMoves: Position[], actions: string[]) {
+  const closestEmptyTile = director.getClosestCityPos(gameState.map, unit.pos)
+  if (!closestEmptyTile) {
+    log('no empty tile found')
+    return
+  }
+  director.cityPlans.push(closestEmptyTile.pos)
+
+  if (unit.pos.distanceTo(closestEmptyTile.pos) === 0) {
+    actions.push(unit.buildCity())
+  } else {
+    const dir = unit.pos.directionTo(closestEmptyTile.pos)
+    moveWithCollisionAvoidance(gameState, unit, dir, otherUnitMoves, actions)
+  }
+}
 
 //// GLOBALS
 const agent = new Agent()
 const director = new Director()
 let match: Match
+let plan: string[] = []
 
 //// MAIN
 async function main() {
@@ -38,20 +68,25 @@ async function main() {
     if (gameState.turn === 0) {
       try {
         const DEPTH = 5 // how many moves ahead (plies) to simulate
-        await treeSearch(match, player.units[0], getSerializedState(gameState), DEPTH)
+        plan = await firstCityTreeSearch(match, player.units[0], getSerializedState(gameState), DEPTH) || []
+        if (!plan || plan.length === 0) log(`Couldn't find plan for first city with DFS`)
+        else log(`Planning first city on turn ${plan.length}`)
       } catch (e) {
         log(e.stack || e.message)
       }
     }
   
+    if (plan && plan.length > 0)
+      return [plan.shift()]
+
     // we iterate over all our units and do something with them
     for (let i = 0; i < player.units.length; i++) {
       const unit = player.units[i]
       if (unit.isWorker() && unit.canAct()) {
         if (unit.getCargoSpaceLeft() > 0) {
-          // gatherClosestResource(resourceTiles, player, unit, gameState, otherUnitMoves, actions)
+          gatherClosestResource(resourceTiles, player, unit, gameState, otherUnitMoves, actions)
         } else {
-          // buildClosestCity(gameState, unit, otherUnitMoves, actions)
+          buildClosestCity(gameState, unit, otherUnitMoves, actions)
         }
       }
     }
@@ -59,10 +94,10 @@ async function main() {
     player.cities.forEach((city) => {
       city.citytiles.forEach((citytile) => {
         if (citytile.cooldown >= 1) return
-        // if (player.units.length < player.cityTileCount)
-        //   actions.push(citytile.buildWorker())
-        // else
-        //   actions.push(citytile.research())
+        if (player.units.length < player.cityTileCount)
+          actions.push(citytile.buildWorker())
+        else
+          actions.push(citytile.research())
       })
     })
   

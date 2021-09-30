@@ -59,31 +59,44 @@ function countCities(cities: Game['cities'], team: LuxUnit.TEAM) {
   return count
 }
 
-export async function treeSearch(match: Match, unit: Unit, serializedState: SerializedState, depth: number = 1, pastActions: string[] = []) {
+/**
+ * Depth-first tree search for the fastest plan to build the first city
+ * @todo this should definitely be a BREADTH-first search (duh)
+ * @returns an array of actions (one per turn) to be executed
+ */
+export async function firstCityTreeSearch(
+  match: Match,
+  unit: Unit,
+  serializedState: SerializedState,
+  depth: number = 1,
+  pastActions: string[] = [],
+): Promise<string[] | false> {
   try {
     const start = new Date().getTime()
-    log('treeSearch')
+    // log('treeSearch')
   
     const state = match.state as LuxMatchState
     const matchUnit = state.game.getUnit(unit.team, unit.id)
     if (!matchUnit) {
       log('treeSearch: unit died in this branch')
-      return
+      return null
     }
 
     // Base case
-    if (depth === 0) {
-      log('=== Hit the base case ===')
+    const num_cities = countCities(state.game.cities, unit.team)
+    if (depth === 0 || num_cities === 2) {
+      // log('=== Hit the base case ===')
 
       const Δx = matchUnit.pos.x - unit.pos.x
       const Δy = matchUnit.pos.y - unit.pos.y
       const Δwood = matchUnit.cargo.wood - unit.cargo.wood
-      const num_cities = countCities(state.game.cities, unit.team)
 
-      log(`The unit moved by delta_x=${Δx} and delta_y=${Δy}`)
-      log(`The unit collected ${Δwood} wood`)
-      log(`Team has ${num_cities} cities`)
-      return
+      // log(`The unit moved by delta_x=${Δx} and delta_y=${Δy}`)
+      // log(`The unit collected ${Δwood} wood`)
+      // log(`Team has ${num_cities} cities`)
+
+      if (num_cities === 2) return pastActions
+      else return false
     }
 
     const actions = []
@@ -94,11 +107,12 @@ export async function treeSearch(match: Match, unit: Unit, serializedState: Seri
       actions.push(unit.move(GAME_CONSTANTS.DIRECTIONS.CENTER))
     }
 
-    log(`Actions (${actions.length}): [${actions.map(action => `"${action}"`).join(', ')}]`)
+    // log(`Actions (${actions.length}): [${actions.map(action => `"${action}"`).join(', ')}]`)
 
-    if (actions.length === 1)
-      log('On cooldown this turn')
+    // if (actions.length === 1)
+    //   log('On cooldown this turn')
 
+    // Try all possible actions each turn
     for (const action of actions) {
       LuxDesignLogic.reset(match, serializedState)
       await LuxDesignLogic.update(match, [{
@@ -106,12 +120,17 @@ export async function treeSearch(match: Match, unit: Unit, serializedState: Seri
         command: action,
       }])
       const newState = state.game.toStateObject()
-      await treeSearch(match, unit, newState, depth - 1, [...pastActions, action])
+      const recursiveCase = await firstCityTreeSearch(match, unit, newState, depth - 1, [...pastActions, action])
+      if (recursiveCase) {
+        log(`treeSearch found a solution in ${new Date().getTime() - start}ms`)
+        return recursiveCase
+      }
     }
 
-    // Try all possible actions each turn
-    log(`treeSearch done in ${new Date().getTime() - start}ms`)
+    // log(`treeSearch done in ${new Date().getTime() - start}ms`)
+    return false
   } catch (e) {
     log(e.stack || e.message)
+    return false
   }
 }
