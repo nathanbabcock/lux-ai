@@ -84,7 +84,7 @@ export async function firstCityTreeSearch(
 
     // Base case
     const num_cities = countCities(state.game.cities, unit.team)
-    if (depth === 0 || num_cities === 2) {
+    if (depth === 0) {
       // log('=== Hit the base case ===')
 
       const Δx = matchUnit.pos.x - unit.pos.x
@@ -112,6 +112,8 @@ export async function firstCityTreeSearch(
     // if (actions.length === 1)
     //   log('On cooldown this turn')
 
+    const possiblePlans: Array<Array<string>> = []
+
     // Try all possible actions each turn
     for (const action of actions) {
       LuxDesignLogic.reset(match, serializedState)
@@ -120,11 +122,14 @@ export async function firstCityTreeSearch(
         command: action,
       }])
       const newState = state.game.toStateObject()
-      const recursiveCase = await firstCityTreeSearch(match, unit, newState, depth - 1, [...pastActions, action])
-      if (recursiveCase) {
-        log(`treeSearch found a solution in ${new Date().getTime() - start}ms`)
-        return recursiveCase
-      }
+      const plan = await firstCityTreeSearch(match, unit, newState, depth - 1, [...pastActions, action])
+      if (plan) possiblePlans.push(plan)
+    }
+
+    if (possiblePlans.length > 0) {
+      log(`treeSearch found ${possiblePlans.length} solutions in ${new Date().getTime() - start}ms`)
+      possiblePlans.sort((a, b) => a.length - b.length)
+      return possiblePlans[0]
     }
 
     // log(`treeSearch done in ${new Date().getTime() - start}ms`)

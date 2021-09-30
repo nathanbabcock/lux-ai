@@ -7,10 +7,11 @@
     "start": "npm run build && npm run sim && npm run vis",
     "build": "tsc",
     "watch": "tsc -w",
-    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay dist/agents/tree-search.js dist/agents/hello-world.js --out=replays/replay.json",
+    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay dist/agents/tree-search.js dist/agents/director-expander.js --out=replays/replay.json",
     "vis": "lux-ai-vis replays/replay.json",
     "sim-vis": "npm run sim && npm run vis",
-    "submission": "tar -czvf submissions/director-expander.tar.gz dist main.py"
+    "tournament": "lux-ai-2021 --storeLogs=false --storeReplay=false --rankSystem=wins --tournament dist/agents/tree-search.js dist/agents/director-expander.js",
+    "submission": "tar -czvf submissions/dfs-first-city.tar.gz dist main.py"
   },
   "author": "Nathan Babcock",
   "license": "UNLICENSED",
