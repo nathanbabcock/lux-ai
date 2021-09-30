@@ -5,9 +5,16 @@ const LOG_FILE = '../../replays/log.txt'
 export function clearLog() {
   try {
     unlinkSync(LOG_FILE)
-  } catch (e) {}
+  } catch (e) {
+    // If the log file or folder doesn't exist, nothing needs to be done
+  }
 }
 
 export function log(...messages: any[]) {
-  appendFileSync(LOG_FILE, `${messages.join(' ')}\n`)
+  try {
+    appendFileSync(LOG_FILE, `${messages.join(' ')}\n`)
+  } catch (e) {
+    // If the log folder doesn't exist, fail silently
+    // This is the case on Kaggle submissions, run in isolation with `--storeReplays=false`
+  }
 }
