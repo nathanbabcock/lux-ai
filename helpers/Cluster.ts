@@ -3,7 +3,7 @@ import { CityTile } from '../lux/CityTile'
 import { GameMap } from '../lux/GameMap'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
-import { getResources } from './helpers'
+import { getNeighbors, getResources } from './helpers'
 import { log } from './logging'
 
 export default class Cluster {
@@ -15,6 +15,29 @@ export default class Cluster {
 
   getCityTiles(clusters: Array<Cluster>, cityTiles: Array<CityTile>): Array<CityTile> {
     return cityTiles.filter(cityTile => getClosestCluster(clusters, cityTile.pos) === this)
+  }
+
+  /** Returns average position of the cluster's Cells, rounded to the nearest integer */
+  getCenter(): Position {
+    const x = this.cells.reduce((sum, cell) => sum + cell.pos.x, 0) / this.cells.length
+    const y = this.cells.reduce((sum, cell) => sum + cell.pos.y, 0) / this.cells.length
+    return new Position(Math.round(x), Math.round(y))
+  }
+
+  /** Get all cells adjacent to a cell in this cluster, but not a part of the cluster itself */
+  getPerimeter(gameMap: GameMap): Array<Cell> {
+    const perimeter: Array<Cell> = []
+    this.cells.forEach(cell => {
+      const neighbors = getNeighbors(cell, gameMap)
+      neighbors.forEach(neighbor => {
+        if (this.cells.find(cell => cell.pos.equals(neighbor.pos))) return
+        if (perimeter.find(cell => cell.pos.equals(neighbor.pos))) return
+        if (neighbor.citytile) return
+        if (neighbor.resource) return
+        perimeter.push(neighbor)
+      })
+    })
+    return perimeter
   }
 }
 

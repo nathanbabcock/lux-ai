@@ -1,11 +1,11 @@
 import { Match } from 'dimensions-ai'
-import { getClusters } from '../helpers/Cluster'
+import Cluster, { getClusters } from '../helpers/Cluster'
 import Director from '../helpers/Director'
 import getSerializedState from '../helpers/getSerializedState'
 import { getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import { firstCityTreeSearch, initMatch } from '../helpers/TreeSearch'
-import { Agent, GameState } from '../lux/Agent'
+import { Agent, annotate, GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { Player } from '../lux/Player'
 import type { Position } from '../lux/Position'
@@ -65,6 +65,17 @@ async function main() {
     director.cityPlans = []
     director.resourcePlans = []
     
+    // Annotate clusters
+    const unit = player.units[0]
+    clusters.forEach(cluster => {
+      actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
+
+      const perimeter = cluster.getPerimeter(gameMap)
+      perimeter.forEach(cell => {
+        actions.push(annotate.circle(cell.pos.x, cell.pos.y))
+      })
+    })
+
     if (gameState.turn === 0) {
       try {
         const DEPTH = 5 // how many moves ahead (plies) to simulate
@@ -77,7 +88,7 @@ async function main() {
     }
   
     if (plan && plan.length > 0)
-      return [plan.shift()]
+      return [...actions, plan.shift()]
 
     // we iterate over all our units and do something with them
     for (let i = 0; i < player.units.length; i++) {
