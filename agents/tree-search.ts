@@ -1,8 +1,8 @@
 import { Match } from 'dimensions-ai'
-import Cluster, { getClusters } from '../helpers/Cluster'
+import { getClusters } from '../helpers/Cluster'
 import Director from '../helpers/Director'
 import getSerializedState from '../helpers/getSerializedState'
-import { getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
+import { getClosestResourceTile, getResourceAdjacency, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import { firstCityTreeSearch, initMatch } from '../helpers/TreeSearch'
 import { Agent, annotate, GameState } from '../lux/Agent'
@@ -67,15 +67,24 @@ async function main() {
     
     // Annotate clusters
     const unit = player.units[0]
-    clusters.forEach(cluster => {
-      actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
+    if (unit) {
+      actions.push(annotate.sidetext('CAN U SEE ME'))
+      clusters.forEach(cluster => {
+        actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
 
-      const perimeter = cluster.getPerimeter(gameMap)
-      perimeter.forEach(cell => {
-        actions.push(annotate.circle(cell.pos.x, cell.pos.y))
+        cluster.cells.forEach(cell => {
+          actions.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, gameMap)}`))
+        })
+
+        const perimeter = cluster.getPerimeter(gameMap)
+        perimeter.forEach(cell => {
+          actions.push(annotate.circle(cell.pos.x, cell.pos.y))
+          actions.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, gameMap)}`))
+        })
       })
-    })
+    }
 
+    // Run exhaustive DFS for first 5 moves 
     if (gameState.turn === 0) {
       try {
         const DEPTH = 5 // how many moves ahead (plies) to simulate

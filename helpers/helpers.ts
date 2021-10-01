@@ -7,6 +7,7 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import type { Player } from '../lux/Player'
 import { Position } from '../lux/Position'
 import type { Unit } from '../lux/Unit'
+import { log } from './logging'
 
 export function getClosestResourceTile(resourceTiles: Array<Cell>, player: Player, unit: Unit): Cell | null {
   // if the unit is a worker and we have space in cargo, lets find the nearest resource tile and try to mine it
@@ -161,4 +162,14 @@ export function getNeighbors(cell: Cell, gameMap: GameMap): Array<Cell> {
     }
   }
   return neighbors
+}
+
+/**  Get the number of resources accessible to a worker on the given Cell, between 0-5 */
+export function getResourceAdjacency(cell: Cell, gameMap: GameMap): number {
+  const neighbors = getNeighbors(cell, gameMap)
+  let adjacency = cell.hasResource() ? 1 : 0
+  neighbors.forEach((neighbor) => {
+    if (neighbor.hasResource()) adjacency++
+  })
+  return adjacency
 }
