@@ -173,3 +173,7 @@ export function getResourceAdjacency(cell: Cell, gameMap: GameMap): number {
   })
   return adjacency
 }
+
+export function getMapCenter(gameMap: GameMap): Position {
+  return new Position(Math.round(gameMap.width / 2), Math.round(gameMap.height / 2))
+}

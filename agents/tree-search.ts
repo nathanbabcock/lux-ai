@@ -68,9 +68,9 @@ async function main() {
     // Annotate clusters
     const unit = player.units[0]
     if (unit) {
-      actions.push(annotate.sidetext('CAN U SEE ME'))
+      actions.push(annotate.sidetext('Hello world'))
       clusters.forEach(cluster => {
-        actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
+        // actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
 
         cluster.cells.forEach(cell => {
           actions.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, gameMap)}`))
@@ -81,6 +81,9 @@ async function main() {
           actions.push(annotate.circle(cell.pos.x, cell.pos.y))
           actions.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, gameMap)}`))
         })
+
+        const citySite = cluster.getCitySite(gameMap)
+        if (citySite) actions.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
       })
     }
 

@@ -3,7 +3,7 @@ import { CityTile } from '../lux/CityTile'
 import { GameMap } from '../lux/GameMap'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
-import { getNeighbors, getResources } from './helpers'
+import { getMapCenter, getNeighbors, getResourceAdjacency, getResources } from './helpers'
 import { log } from './logging'
 
 export default class Cluster {
@@ -38,6 +38,28 @@ export default class Cluster {
       })
     })
     return perimeter
+  }
+
+  /** Returns the best spot for a city on the perimeter of this cluster */
+  getCitySite(gameMap: GameMap, perimeter?: Array<Cell>): Cell | null {
+    if (!perimeter) perimeter = this.getPerimeter(gameMap)
+    let bestCells: Array<Cell> = []
+    let bestResourceAdjacency = 0
+
+    perimeter.forEach(cell => {
+      const adjacency = getResourceAdjacency(cell, gameMap)
+      if (adjacency > bestResourceAdjacency) {
+        bestResourceAdjacency = adjacency
+        bestCells = [cell]
+      } else if (adjacency === bestResourceAdjacency) {
+        bestCells.push(cell)
+      }
+    })
+
+    if (bestCells.length === 0) return null
+    const mapCenter = getMapCenter(gameMap)
+    bestCells.sort((a, b) => a.pos.distanceTo(mapCenter) - b.pos.distanceTo(mapCenter))
+    return bestCells[0]
   }
 }
 
