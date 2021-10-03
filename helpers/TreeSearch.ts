@@ -1,9 +1,12 @@
-import { create, Logger, Match } from 'dimensions-ai'
 import { Game, LuxDesign, LuxDesignLogic, LuxMatchConfigs, LuxMatchState, SerializedState, Unit as LuxUnit } from '@lux-ai/2021-challenge'
-import GAME_CONSTANTS from '../lux/game_constants.json'
-import { Unit } from '../lux/Unit'
-import { log } from './logging'
+import { create, Logger, Match } from 'dimensions-ai'
 import { DeepPartial } from 'dimensions-ai/lib/main/utils/DeepPartial'
+import { GameState } from '../lux/Agent'
+import GAME_CONSTANTS from '../lux/game_constants.json'
+import { Position } from '../lux/Position'
+import { Unit } from '../lux/Unit'
+import getSerializedState, { updateGameState } from './getSerializedState'
+import { log } from './logging'
 
 export async function initMatch(): Promise<Match> {
   const lux2021 = new LuxDesign('lux_ai_2021')
@@ -137,5 +140,64 @@ export async function firstCityTreeSearch(
   } catch (e) {
     log(e.stack || e.message)
     return false
+  }
+}
+
+// type SettlerMissionOutcome = {
+//   unitDied: boolean
+//   cityBuiltOnTurn: number
+// }
+
+export async function simulateSettlerMission(
+  unit: Unit,
+  destination: Position,
+  gameState: GameState,
+  match: Match,
+  getActions: (gameState: GameState, treeSearch: boolean) => Promise<Array<string>>
+): Promise<GameState> {
+  try {
+    const MAX_SIM_TURNS = 40
+    
+    const serializedState = getSerializedState(gameState)
+    LuxDesignLogic.reset(match, serializedState)
+    let cityBuilt = false
+    let unitDied = false
+    let simTurns = 0
+    
+    while (!cityBuilt && !unitDied && simTurns < MAX_SIM_TURNS) {
+      const state = match.state as LuxMatchState
+      const matchUnit = state.game.getUnit(unit.team, unit.id)
+      if (!matchUnit) {
+        unitDied = true
+        break
+      }
+
+      const actions = await getActions(gameState, false)
+      const commands = actions.map(action => ({
+        agentID: unit.team,
+        command: action,
+      }))
+
+      await LuxDesignLogic.update(match, commands)
+      updateGameState(gameState, (match.state as LuxMatchState).game)
+      simTurns++
+
+      const cityTile = gameState.map.getCellByPos(destination).citytile
+      if (cityTile && cityTile.team === unit.team) {
+        cityBuilt = true
+        break
+      } else if (cityTile && cityTile.team !== unit.team) {
+        log('simulateSettlerMission: enemy built city on destination tile')
+        break
+      }
+    }
+
+    if (cityBuilt) log('simulateSettlerMission: city built on this mission')
+    if (unitDied) log('simulateSettlerMission: unit died on this mission')
+    if (!cityBuilt && !unitDied) log('simulateSettlerMission: nothing happened')
+    
+    return gameState
+  } catch (e) {
+    log(e.stack || e.message)
   }
 }
