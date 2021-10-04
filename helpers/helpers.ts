@@ -7,7 +7,6 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import type { Player } from '../lux/Player'
 import { Position } from '../lux/Position'
 import type { Unit } from '../lux/Unit'
-import { log } from './logging'
 
 export function getClosestResourceTile(resourceTiles: Array<Cell>, player: Player, unit: Unit): Cell | null {
   // if the unit is a worker and we have space in cargo, lets find the nearest resource tile and try to mine it
@@ -88,7 +87,13 @@ export function buildCity(gameState: GameState, unit: Unit, actions: Array<strin
 
 export function moveWithCollisionAvoidance(gameState: GameState, unit: Unit, dir: string, otherUnitMoves: Array<Position>, actions: Array<string>) {
   const destination = unit.pos.translate(dir, 1)
-  if (otherUnitMoves.some((pos) => pos.equals(destination))) {
+  const teamUnitCollision = otherUnitMoves
+    .some((pos) => pos.equals(destination))
+  const cityCollision = gameState.players
+    .map(player => Array.from(player.cities.values())).flat() 
+    .map(city => city.citytiles).flat()
+    .some(citytile => citytile.pos.equals(destination))
+  if (teamUnitCollision || cityCollision) {
     // Try to go around
     if (sidestep(unit, dir, otherUnitMoves, actions)) return
 

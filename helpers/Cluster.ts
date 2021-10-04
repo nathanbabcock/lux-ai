@@ -80,6 +80,10 @@ export function getClosestCluster(clusters: Array<Cluster>, pos: Position) {
   return closest
 }
 
+/**
+ * @todo clusters should be homogenous resource types
+ * @todo only list cluster of resource types which can be mined (??)
+ */
 export function getClusters(map: GameMap) {
   const clusters: Array<Cluster> = []
   const resources = getResources(map)
@@ -93,7 +97,6 @@ export function getClusters(map: GameMap) {
     cluster.cells.push(cell)
   }
 
-  // TODO: merge clusters
   outer: while (true) {
     for (let i = 0; i < clusters.length; i++) {
       const cluster = clusters[i]
