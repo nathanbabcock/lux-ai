@@ -1,14 +1,11 @@
-import { LuxDesignLogic, LuxMatchState } from '@lux-ai/2021-challenge'
-import { classToPlain } from 'class-transformer'
 import { Match } from 'dimensions-ai'
 import 'reflect-metadata'
 import { getClusters } from '../helpers/Cluster'
-import { getSerializedState, updateGameState } from '../helpers/Conversions'
 import Director from '../helpers/Director'
 import { getClosestResourceTile, getResourceAdjacency, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import { simulateSettlerMission } from '../helpers/Sim'
-import { firstCityTreeSearch, initMatch } from '../helpers/TreeSearch'
+import { initMatch } from '../helpers/TreeSearch'
 import { chooseRandom } from '../helpers/util'
 import { Agent, annotate, GameState } from '../lux/Agent'
 import GAME_CONSTANTS from '../lux/game_constants.json'
@@ -68,16 +65,39 @@ export async function turn(
     moveWithCollisionAvoidance(gameState, unit, dir, otherUnitMoves, actions)
   }
 
-  // Opening tree search (depth-first, 5-ply)
-  if (gameState.turn === 0) {
-    try {
-      const DEPTH = 5 // how many moves ahead (plies) to simulate
-      plan = await firstCityTreeSearch(match, player.units[0], getSerializedState(gameState), DEPTH) || []
-      if (!plan || plan.length === 0) sidetext(`Couldn't find plan for first city with DFS`)
-      else sidetext(`Planning first city on turn ${plan.length}`)
-      // TODO: add plan to permanentAnnotations?
-    } catch (e) {
-      log(e.stack || e.message)
+  /** As opposed to {@link simulateSettlerMission}. */
+  async function simulateSettler(unit: Unit) {
+    const destination = chooseRandom(clusters).getCitySite(gameMap).pos
+    const simResult = await simulateSettlerMission(unit, destination, gameState, match, turn)
+    if (simResult) {
+      sidetext(`Simulated mission to x=${destination.x} y=${destination.y}`)
+      sidetext(`The sim lasted ${simResult.gameState.turn - gameState.turn} turns`)
+    } else {
+      sidetext(`Simulated mission failed`)
+    }
+    permanentAnnotations = simResult.annotations
+    return simResult.plan
+  }
+
+  function annotateClusters() {
+    const unit = player.units[0]
+    if (unit && gameState.turn === 1) {
+      clusters.forEach(cluster => {
+        // actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
+
+        cluster.cells.forEach(cell => {
+          actions.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, gameMap)}`))
+        })
+
+        const perimeter = cluster.getPerimeter(gameMap)
+        perimeter.forEach(cell => {
+          actions.push(annotate.circle(cell.pos.x, cell.pos.y))
+          actions.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, gameMap)}`))
+        })
+
+        const citySite = cluster.getCitySite(gameMap)
+        if (citySite) actions.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
+      })
     }
   }
   
@@ -93,7 +113,16 @@ export async function turn(
         }
         gatherClosestResource(unit)
       } else {
-        buildClosestCity(unit)
+        if (unit.id === 'u_1' && gameState.turn > 5 && (!plan || plan.length === 0) && !settlerMissionGoal)
+          plan = await simulateSettler(unit)
+        else if (unit.id === 'u_1' && settlerMissionGoal)
+          buildCityAtPosition(unit, settlerMissionGoal)
+        else if (unit.id === 'u_1' && plan && plan.length > 0) {
+          sidetext(`${unit.id} executing step 1 of ${plan.length}`)
+          sidetext(`This step: ${plan[0].replace(/,'"/, '')}`)
+          continue
+        } else
+          buildClosestCity(unit)
       }
     } else if (!unit.canAct()) {
       // explicitly push a 'move center' action, which will be consumed by plan runners
@@ -122,9 +151,9 @@ export async function turn(
 //// MAIN
 async function main() {
   clearLog()
-  log('=================')
-  log('Tree Search Agent')
-  log('=================')
+  log('=========')
+  log('Sim Agent')
+  log('=========')
 
   match = await initMatch()
   log('Match initialized')

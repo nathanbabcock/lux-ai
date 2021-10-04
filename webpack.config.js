@@ -2,6 +2,7 @@ module.exports = {
   mode: 'development',
   entry: {
     'tree-search': './agents/tree-search.ts',
+    'sim': './agents/sim.ts',
   },
   target: 'node',
   module: {

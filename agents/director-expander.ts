@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { getClusters } from '../helpers/Cluster'
 import Director from '../helpers/Director'
 import { getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
