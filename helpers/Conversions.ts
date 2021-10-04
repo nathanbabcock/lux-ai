@@ -9,7 +9,7 @@ import { Unit } from '../lux/Unit'
  * @param {GameState} gameState the simplified Typescript object model
  * @returns {SerializedState} The full internal state of the game used by the Lux AI runner
  */
-export default function getSerializedState(gameState: GameState): SerializedState {
+export function getSerializedState(gameState: GameState): SerializedState {
   const turn: SerializedState['turn'] = gameState.turn
   const globalCityIDCount: SerializedState['globalCityIDCount'] = gameState.players.reduce((numCities, player) => numCities + player.cities.size, 0)
   const globalUnitIDCount: SerializedState['globalUnitIDCount'] = gameState.players.reduce((numUnits, player) => numUnits + player.units.length, 0)
