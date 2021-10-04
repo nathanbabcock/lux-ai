@@ -107,10 +107,12 @@ export async function turn(
         const citySite = cluster.getCitySite(gameMap)
         if (!citySite) return
         const simResult = await simulateSettlerMission(unit, citySite.pos, gameState, match, turn)
+        if (!simResult) continue
         missionsSimulated++
   
         actions.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
         actions.push(annotate.circle(citySite.pos.x, citySite.pos.y))
+        actions.push(annotate.text(citySite.pos.x, citySite.pos.y, `${simResult.outcome}`))
       }
   
       sidetext(`Simulated ${missionsSimulated} missions`)

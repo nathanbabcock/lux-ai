@@ -95,6 +95,19 @@ describe('SerializedState => Game (Lux AI internal)', () => {
     expect(game.map.height).toBe(gameState.map.width)
   })
 
+  test('getCityById', async () => {
+    const { game, gameState } = await initialize()
+
+    const cities = Array.from(gameState.players[0].cities.entries())
+    const city = cities[0][1]
+    const cityTile = city.citytiles[0]
+
+    const cell = game.map.getCellByPos(cityTile.pos)
+    const newCity = game.cities.get(cell.citytile.cityid)
+
+    expect(newCity).toBeDefined()
+  })
+
   // If needed: add more tests for Resources, Units, Cities, Players
 })
 

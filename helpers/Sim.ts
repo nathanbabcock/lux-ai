@@ -12,6 +12,7 @@ export type MissionSimulation = {
   gameState: GameState
   plan: string[]
   annotations: string[]
+  outcome: boolean
 }
 
 export async function simulateSettlerMission(
@@ -79,8 +80,12 @@ export async function simulateSettlerMission(
       gameState,
       plan,
       annotations,
+      outcome: cityBuilt,
     }
   } catch (e) {
     log(e.stack || e.message)
+    const game = (match.state as LuxMatchState).game
+    const units = Array.from(game.getTeamsUnits(unit.team).values())
+    log(`Units = ${units.map(unit => unit.cargo.wood)}`)
   }
 }
