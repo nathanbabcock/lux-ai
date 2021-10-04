@@ -4,7 +4,7 @@ import { turn } from '../agents/tree-search'
 import { annotate, GameState } from '../lux/Agent'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
-import { getSerializedState, updateGameState } from './Conversions'
+import Convert from './Convert'
 import { log } from './logging'
 import { clone } from './util'
 
@@ -29,7 +29,7 @@ export async function simulateSettlerMission(
     const annotations: string[] = [
       annotate.line(unit.pos.x, unit.pos.y, destination.x, destination.y)
     ]
-    const serializedState = getSerializedState(gameState)
+    const serializedState = Convert.toSerializedState(gameState)
     LuxDesignLogic.reset(match, serializedState)
     let cityBuilt = false
     let unitDied = false
@@ -50,7 +50,7 @@ export async function simulateSettlerMission(
       }))
 
       await LuxDesignLogic.update(match, commands)
-      updateGameState(gameState, (match.state as LuxMatchState).game)
+      Convert.updateGameState(gameState, (match.state as LuxMatchState).game)
       simTurns++
 
       if (!getMatchUnit()) {

@@ -3,7 +3,7 @@ import { plainToClass } from 'class-transformer'
 import 'reflect-metadata'
 import { GameState } from '../lux/Agent'
 import { GameMap } from '../lux/GameMap'
-import { getSerializedState, updateGameState } from './Conversions'
+import Convert from './Convert'
 import DUMMY_GAMESTATE from './dummy-gamestate.json'
 import { initMatch } from './TreeSearch'
 import { clone } from './util'
@@ -18,7 +18,7 @@ describe('JSON => GameState (class-transformer)', () => {
 describe('GameState => SerializedState', () => {
   const initialize = () => {
     const gameState = plainToClass(GameState, DUMMY_GAMESTATE)
-    const serializedState: SerializedState = getSerializedState(gameState)
+    const serializedState: SerializedState = Convert.toSerializedState(gameState)
     return { gameState, serializedState }
   }
 
@@ -74,7 +74,7 @@ describe('SerializedState => Game (Lux AI internal)', () => {
   const initialize = async () => {
     const match = await initMatch()
     const gameState = plainToClass(GameState, DUMMY_GAMESTATE)
-    const serializedState: SerializedState = getSerializedState(gameState)
+    const serializedState: SerializedState = Convert.toSerializedState(gameState)
     LuxDesignLogic.reset(match, serializedState)
     const game = (match.state as LuxMatchState).game
     return { match, gameState, serializedState, game }
@@ -103,11 +103,11 @@ describe('Game => GameState (round trip)', () => {
   const initialize = async () => {
     const match = await initMatch()
     const originalGameState = plainToClass(GameState, DUMMY_GAMESTATE)
-    const serializedState: SerializedState = getSerializedState(originalGameState)
+    const serializedState: SerializedState = Convert.toSerializedState(originalGameState)
     LuxDesignLogic.reset(match, serializedState)
     const game = (match.state as LuxMatchState).game
     const finalGameState = clone(originalGameState)
-    updateGameState(finalGameState, game)
+    Convert.updateGameState(finalGameState, game)
     return { match, originalGameState, serializedState, game, finalGameState }
   }
 

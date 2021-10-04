@@ -1,15 +1,11 @@
-import { LuxDesignLogic, LuxMatchState } from '@lux-ai/2021-challenge'
-import { classToPlain } from 'class-transformer'
 import { Match } from 'dimensions-ai'
 import 'reflect-metadata'
 import { getClusters } from '../helpers/Cluster'
-import { getSerializedState, updateGameState } from '../helpers/Conversions'
+import Convert from '../helpers/Convert'
 import Director from '../helpers/Director'
-import { getClosestResourceTile, getResourceAdjacency, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
+import { getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
-import { simulateSettlerMission } from '../helpers/Sim'
 import { firstCityTreeSearch, initMatch } from '../helpers/TreeSearch'
-import { chooseRandom } from '../helpers/util'
 import { Agent, annotate, GameState } from '../lux/Agent'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import type { Position } from '../lux/Position'
@@ -72,7 +68,7 @@ export async function turn(
   if (gameState.turn === 0) {
     try {
       const DEPTH = 5 // how many moves ahead (plies) to simulate
-      plan = await firstCityTreeSearch(match, player.units[0], getSerializedState(gameState), DEPTH) || []
+      plan = await firstCityTreeSearch(match, player.units[0], Convert.toSerializedState(gameState), DEPTH) || []
       if (!plan || plan.length === 0) sidetext(`Couldn't find plan for first city with DFS`)
       else sidetext(`Planning first city on turn ${plan.length}`)
       // TODO: add plan to permanentAnnotations?
