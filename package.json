@@ -33,6 +33,8 @@
   },
   "dependencies": {
     "@lux-ai/2021-challenge": "^3.1.0",
-    "dimensions-ai": "^5.1.3"
+    "dimensions-ai": "^5.1.3",
+    "reflect-metadata": "^0.1.13",
+    "class-transformer": "^0.4.0"
   }
 }

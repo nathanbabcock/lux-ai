@@ -1,19 +1,25 @@
+import { Type } from 'class-transformer';
 import readline from "readline";
-import {Player} from "./Player";
-import {GameMap} from "./GameMap";
-import {City} from "./City";
-import {Unit} from "./Unit";
-import {Parser} from "./Parser";
-import {Parsed} from "./Parsed";
-import {INPUT_CONSTANTS} from './io';
+import { City } from "./City";
+import { GameMap } from "./GameMap";
+import { INPUT_CONSTANTS } from './io';
+import { Parsed } from "./Parsed";
+import { Parser } from "./Parser";
+import { Player } from "./Player";
+import { Unit } from "./Unit";
 
 // Create parser and use ',' as the delimiter between commands being sent by the `Match` and `MatchEngine`
 const parse = new Parser(' ');
 
-export interface GameState {
+export class GameState {
   id: number;
+
+  @Type(() => GameMap)
   map: GameMap;
+
+  @Type(() => Player)
   players: Array<Player>;
+
   turn: number;
 }
 

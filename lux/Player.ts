@@ -1,6 +1,7 @@
 import GAME_CONSTANTS from "./game_constants.json";
 import {City} from "./City";
 import {Unit} from "./Unit";
+import {Type} from "class-transformer";
 
 /**
  * holds all data related to a player
@@ -9,7 +10,11 @@ export class Player {
   public readonly team: number;
   public researchPoints = 0;
   // Map unit id to the unit
+
+  @Type(() => Unit)
   public units = new Array<Unit>();
+
+  @Type(() => Map)
   public cities = new Map<string, City>();
   public cityTileCount = 0;
 

@@ -1,8 +1,10 @@
 import { LuxDesignLogic, LuxMatchState } from '@lux-ai/2021-challenge'
+import { classToPlain } from 'class-transformer'
 import { Match } from 'dimensions-ai'
+import 'reflect-metadata'
 import { getClusters } from '../helpers/Cluster'
-import Director from '../helpers/Director'
 import getSerializedState, { updateGameState } from '../helpers/Conversions'
+import Director from '../helpers/Director'
 import { getClosestResourceTile, getResourceAdjacency, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import { firstCityTreeSearch, initMatch, simulateSettlerMission } from '../helpers/TreeSearch'
@@ -33,6 +35,12 @@ export async function turn(
   director.cityPlans = []
   director.resourcePlans = []
   
+  if (gameState.turn === 0) {
+    log(`=== dummy gamestate ===`)
+    log(JSON.stringify(classToPlain(gameState), null, 2))
+    log(`=== dummy gamestate ===`)
+  }
+
   const sidetext = (...messages: any[]) => 
     actions.push(annotate.sidetext(`${messages.join(' ')}\n`))
 

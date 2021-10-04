@@ -1,9 +1,12 @@
 import {Cell} from "./Cell";
 import {Position} from "./Position";
+import {Type} from "class-transformer";
 
 export class GameMap {
   public width: number;
   public height: number;
+
+  @Type(() => Cell)
   public map: Array<Array<Cell>>;
 
   public constructor(width: number, height: number) {
