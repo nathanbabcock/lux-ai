@@ -1,7 +1,8 @@
+import { Type } from "class-transformer";
+import 'reflect-metadata';
+import { City } from "./City";
 import GAME_CONSTANTS from "./game_constants.json";
-import {City} from "./City";
-import {Unit} from "./Unit";
-import {Type} from "class-transformer";
+import { Unit } from "./Unit";
 
 /**
  * holds all data related to a player

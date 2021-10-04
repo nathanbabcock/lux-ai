@@ -1,5 +1,4 @@
 import { Match } from 'dimensions-ai'
-import 'reflect-metadata'
 import { getClusters } from '../helpers/Cluster'
 import Director from '../helpers/Director'
 import { getClosestResourceTile, getResourceAdjacency, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
@@ -100,29 +99,43 @@ export async function turn(
       })
     }
   }
+
+    /** Try simulating *every* settler mission */
+    async function simulateAllSettlerMissions(unit: Unit) {
+      let missionsSimulated = 0
+      for (const cluster of clusters) {
+        const citySite = cluster.getCitySite(gameMap)
+        if (!citySite) return
+        const simResult = await simulateSettlerMission(unit, citySite.pos, gameState, match, turn)
+        missionsSimulated++
+  
+        actions.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
+        actions.push(annotate.circle(citySite.pos.x, citySite.pos.y))
+      }
+  
+      sidetext(`Simulated ${missionsSimulated} missions`)
+    }
   
   // Units
   for (let i = 0; i < player.units.length; i++) {
     const unit = player.units[i]
     if (unit.isWorker() && unit.canAct()) {
       if (unit.getCargoSpaceLeft() > 0) {
-        if (unit.id === 'u_1' && gameState.turn > 5) {
-          sidetext(`${unit.id} cancelling plan`)
-          plan = []
-          permanentAnnotations = []
-        }
         gatherClosestResource(unit)
       } else {
-        if (unit.id === 'u_1' && gameState.turn > 5 && (!plan || plan.length === 0) && !settlerMissionGoal)
-          plan = await simulateSettler(unit)
-        else if (unit.id === 'u_1' && settlerMissionGoal)
-          buildCityAtPosition(unit, settlerMissionGoal)
-        else if (unit.id === 'u_1' && plan && plan.length > 0) {
-          sidetext(`${unit.id} executing step 1 of ${plan.length}`)
-          sidetext(`This step: ${plan[0].replace(/,'"/, '')}`)
-          continue
-        } else
-          buildClosestCity(unit)
+        if (unit.id === 'u_1' && !settlerMissionGoal) await simulateAllSettlerMissions(unit)
+
+        // if (unit.id === 'u_1' && gameState.turn > 5 && (!plan || plan.length === 0) && !settlerMissionGoal)
+        //   plan = await simulateSettler(unit)
+        // else if (unit.id === 'u_1' && settlerMissionGoal)
+        //   buildCityAtPosition(unit, settlerMissionGoal)
+        // else if (unit.id === 'u_1' && plan && plan.length > 0) {
+        //   sidetext(`${unit.id} executing step 1 of ${plan.length}`)
+        //   sidetext(`This step: ${plan[0].replace(/,'"/, '')}`)
+        //   continue
+        // } else
+
+        buildClosestCity(unit)
       }
     } else if (!unit.canAct()) {
       // explicitly push a 'move center' action, which will be consumed by plan runners

@@ -1,6 +1,5 @@
 import { LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
 import { plainToClass } from 'class-transformer'
-import 'reflect-metadata'
 import { GameState } from '../lux/Agent'
 import { GameMap } from '../lux/GameMap'
 import Convert from './Convert'

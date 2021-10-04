@@ -1,5 +1,4 @@
 import { Match } from 'dimensions-ai'
-import 'reflect-metadata'
 import { getClusters } from '../helpers/Cluster'
 import Convert from '../helpers/Convert'
 import Director from '../helpers/Director'

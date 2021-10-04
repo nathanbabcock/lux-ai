@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import readline from "readline";
+import 'reflect-metadata';
 import { City } from "./City";
 import { GameMap } from "./GameMap";
 import { INPUT_CONSTANTS } from './io';

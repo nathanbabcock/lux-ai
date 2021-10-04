@@ -136,6 +136,7 @@ export function getPerpendicularDirections(dir: string): string[] {
 }
 
 export function getCityTiles(player: Player) {
+  // return Array.from(player.cities.values()).map(city => city.citytiles).flat()
   const cityTiles: Array<CityTile> = []
   player.cities.forEach(city => cityTiles.push(...city.citytiles))
   return cityTiles

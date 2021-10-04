@@ -8,7 +8,7 @@
     "test": "jest --watch",
     "build": "tsc",
     "watch": "tsc -w",
-    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay dist/agents/sim.js dist/agents/director-expander.js --out=replays/replay.json",
+    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay dist/agents/sim.js dist/agents/hello-world.js --out=replays/replay.json",
     "vis": "lux-ai-vis replays/replay.json",
     "sim-vis": "npm run sim && npm run vis",
     "tournament": "lux-ai-2021 --storeLogs=false --storeReplay=false --rankSystem=wins --tournament dist/agents/tree-search.js dist/agents/director-expander.js",
