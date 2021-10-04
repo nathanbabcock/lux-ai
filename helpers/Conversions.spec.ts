@@ -3,9 +3,10 @@ import { plainToClass } from 'class-transformer'
 import 'reflect-metadata'
 import { GameState } from '../lux/Agent'
 import { GameMap } from '../lux/GameMap'
-import getSerializedState from './Conversions'
+import getSerializedState, { updateGameState } from './Conversions'
 import DUMMY_GAMESTATE from './dummy-gamestate.json'
 import { initMatch } from './TreeSearch'
+import { clone } from './util'
 
 describe('JSON => GameState (class-transformer)', () => {
   test('Creates GameMap instance', () => {
@@ -95,24 +96,76 @@ describe('SerializedState => Game (Lux AI internal)', () => {
     expect(game.map.height).toBe(gameState.map.width)
   })
 
-    // If needed: add more tests for Resources, Units, Cities, Players
+  // If needed: add more tests for Resources, Units, Cities, Players
 })
 
-// function debugConversions() {
-//   // Debug gamestate conversions
-//   log(`\n\nGAMESTATE:`)
-//   log(JSON.stringify(gameState, null, 2))
+describe('Game => GameState (round trip)', () => {
+  const initialize = async () => {
+    const match = await initMatch()
+    const originalGameState = plainToClass(GameState, DUMMY_GAMESTATE)
+    const serializedState: SerializedState = getSerializedState(originalGameState)
+    LuxDesignLogic.reset(match, serializedState)
+    const game = (match.state as LuxMatchState).game
+    const finalGameState = clone(originalGameState)
+    updateGameState(finalGameState, game)
+    return { match, originalGameState, serializedState, game, finalGameState }
+  }
 
-//   log(`\n\nSERIALIZED STATE:`)
-//   const serializedState = getSerializedState(gameState)
-//   log(JSON.stringify(serializedState, null, 2))
+  test('Turn', async () => {
+    const { originalGameState, finalGameState } = await initialize()
+    expect(originalGameState.turn).toBe(finalGameState.turn)
+  })
 
-//   log(`\n\nGAME:`)
-//   LuxDesignLogic.reset(match, serializedState)
-//   const game = (match.state as LuxMatchState).game
-//   log(JSON.stringify(game, null, 2))
+  test('Map dimensions', async () => {
+    const { originalGameState, finalGameState } = await initialize()
+    expect(originalGameState.map.width).toBe(finalGameState.map.width)
+    expect(originalGameState.map.height).toBe(finalGameState.map.height)
+  })
 
-//   log(`\n\nGAMESTATE (full circle):`)
-//   updateGameState(gameState, game)
-//   log(JSON.stringify(gameState, null, 2))
-// }
+  test('Resources', async () => {
+    const { originalGameState, finalGameState } = await initialize()
+    for (let y = 0; y < originalGameState.map.height; y++) {
+      for (let x = 0; x < originalGameState.map.width; x++) {
+        const originalResource = originalGameState.map.getCell(x, y).resource
+        const finalResource = finalGameState.map.getCell(x, y).resource
+        if (!originalResource) expect(finalResource).toBe(null)
+        else {
+          expect(finalResource.type).toBe(originalResource.type)
+          expect(finalResource.amount).toBe(originalResource.amount)
+        }
+      }
+    }
+  })
+
+  test('Units', async () => {
+    const { originalGameState, finalGameState } = await initialize()
+    for (let i = 0; i < finalGameState.players.length; i++) {
+      const finalPlayer = finalGameState.players[i]
+      const originalPlayer = originalGameState.players[i]
+
+      for (let j = 0; j < finalPlayer.units.length; j++) {
+        const finalUnit = finalPlayer.units[j]
+        const originalUnit = originalPlayer.units[j]
+
+        expect(finalUnit).toEqual(originalUnit)
+      }
+    }
+  })
+
+  test('Cities', async () => {
+    const { originalGameState, finalGameState } = await initialize()
+    for (let i = 0; i < finalGameState.players.length; i++) {
+      const finalPlayer = finalGameState.players[i]
+      const originalPlayer = originalGameState.players[i]
+      const finalCities = Array.from(finalPlayer.cities.entries())
+      const originalCities = Array.from(originalPlayer.cities.entries())
+
+      for (let j = 0; j < finalCities.length; j++) {
+        const finalCity = finalCities[j]
+        const originalCity = originalCities[j]
+
+        expect(finalCity).toEqual(originalCity)
+      }
+    }
+  })
+})
