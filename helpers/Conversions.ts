@@ -2,9 +2,7 @@ import { Game, Resource as LuxResource, SerializedState, Unit as LuxUnit } from 
 import { GameState } from '../lux/Agent'
 import { City } from '../lux/City'
 import { GameMap } from '../lux/GameMap'
-import { Player } from '../lux/Player'
 import { Unit } from '../lux/Unit'
-import { log } from './logging'
 
 /**
  * SerializedState => GameState

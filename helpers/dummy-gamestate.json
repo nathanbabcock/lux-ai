@@ -1,0 +1,1472 @@
+{
+  "id": 0,
+  "map": {
+    "height": 12,
+    "width": 12,
+    "map": [
+      [
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 302
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "resource": {
+            "type": "uranium",
+            "amount": 336
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 0
+          }
+        },
+        {
+          "resource": {
+            "type": "uranium",
+            "amount": 300
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 0
+          }
+        },
+        {
+          "resource": {
+            "type": "uranium",
+            "amount": 306
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 0
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 0
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 0
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 0
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 390
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 0
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 0
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 0
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 0
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 0
+          }
+        }
+      ],
+      [
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 395
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 1
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 417
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 1
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 360
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 1
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 1
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 2
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 414
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 2
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 2
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 3
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 800
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 3
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 800
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 3
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 800
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 3
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 3
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": {
+            "cityid": "c_1",
+            "team": 0,
+            "pos": {
+              "x": 2,
+              "y": 4
+            },
+            "cooldown": 0
+          },
+          "road": 6,
+          "pos": {
+            "x": 2,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 4
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 4
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 5
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 5
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 311
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 5
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 6
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 6
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 311
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 6
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": {
+            "cityid": "c_2",
+            "team": 1,
+            "pos": {
+              "x": 2,
+              "y": 7
+            },
+            "cooldown": 0
+          },
+          "road": 6,
+          "pos": {
+            "x": 2,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 7
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 7
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 8
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 800
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 8
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 800
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 8
+          }
+        },
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 800
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 8
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 8
+          }
+        }
+      ],
+      [
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 9
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 414
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 9
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 9
+          }
+        }
+      ],
+      [
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 395
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 10
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 417
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 10
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 360
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 10
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 10
+          }
+        }
+      ],
+      [
+        {
+          "resource": {
+            "type": "wood",
+            "amount": 302
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 0,
+            "y": 11
+          }
+        },
+        {
+          "resource": {
+            "type": "uranium",
+            "amount": 336
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 1,
+            "y": 11
+          }
+        },
+        {
+          "resource": {
+            "type": "uranium",
+            "amount": 300
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 2,
+            "y": 11
+          }
+        },
+        {
+          "resource": {
+            "type": "uranium",
+            "amount": 306
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 3,
+            "y": 11
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 4,
+            "y": 11
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 5,
+            "y": 11
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 6,
+            "y": 11
+          }
+        },
+        {
+          "resource": {
+            "type": "coal",
+            "amount": 390
+          },
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 7,
+            "y": 11
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 8,
+            "y": 11
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 9,
+            "y": 11
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 10,
+            "y": 11
+          }
+        },
+        {
+          "resource": null,
+          "citytile": null,
+          "road": 0,
+          "pos": {
+            "x": 11,
+            "y": 11
+          }
+        }
+      ]
+    ]
+  },
+  "players": [
+    {
+      "researchPoints": 0,
+      "units": [
+        {
+          "pos": {
+            "x": 2,
+            "y": 4
+          },
+          "team": 0,
+          "id": "u_1",
+          "type": 0,
+          "cooldown": 0,
+          "cargo": {
+            "wood": 0,
+            "coal": 0,
+            "uranium": 0
+          }
+        }
+      ],
+      "cities": {},
+      "cityTileCount": 1,
+      "team": 0
+    },
+    {
+      "researchPoints": 0,
+      "units": [
+        {
+          "pos": {
+            "x": 2,
+            "y": 7
+          },
+          "team": 1,
+          "id": "u_2",
+          "type": 0,
+          "cooldown": 0,
+          "cargo": {
+            "wood": 0,
+            "coal": 0,
+            "uranium": 0
+          }
+        }
+      ],
+      "cities": {},
+      "cityTileCount": 1,
+      "team": 1
+    }
+  ],
+  "turn": 0
+}

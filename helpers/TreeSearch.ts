@@ -6,7 +6,7 @@ import { annotate, GameState } from '../lux/Agent'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
-import getSerializedState, { updateGameState } from './getSerializedState'
+import getSerializedState, { updateGameState } from './Conversions'
 import { log } from './logging'
 import { clone } from './util'
 
