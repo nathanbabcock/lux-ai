@@ -1,4 +1,4 @@
-import { LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
+import { Game, LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
 import { plainToClass } from 'class-transformer'
 import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
@@ -50,5 +50,7 @@ describe('Sim', () => {
     const newPos = game.getUnit(unit.team, unit.id).pos
     
     expect(newPos.equals(oldPos)).toBe(false)
+
+    game.replay.writeOut(match.results)
   })
 })

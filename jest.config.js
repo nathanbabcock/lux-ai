@@ -1,11 +1,14 @@
 module.exports = {
-  'roots': [
+  roots: [
     '<rootDir>'
   ],
-  'testMatch': [
+  testMatch: [
     '**/?(*.)+(spec|test).+(ts|tsx|js)'
   ],
-  'transform': {
+  watchPathIgnorePatterns: [
+    '<rootDir>/replays/',
+  ],
+  transform: {
     '^.+\\.tsx?$': 'ts-jest'
   },
 }
