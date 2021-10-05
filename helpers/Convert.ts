@@ -2,7 +2,10 @@ import { Game, Resource as LuxResource, SerializedState, Unit as LuxUnit } from 
 import { GameState } from '../lux/Agent'
 import { City } from '../lux/City'
 import { GameMap } from '../lux/GameMap'
+import { Player } from '../lux/Player'
 import { Unit } from '../lux/Unit'
+
+export const TEAMS = [LuxUnit.TEAM.A, LuxUnit.TEAM.B]
 
 /** Convert between different game state representations */
 export default class Convert {
@@ -102,16 +105,15 @@ export default class Convert {
    * @param {Game} game (source of truth)
    */
   static updateGameState(gameState: GameState, game: Game): void {
-    // Reset and initialize 
-    const map = gameState.map = new GameMap(gameState.map.width, gameState.map.height)
+    const map = gameState.map = new GameMap(game.map.width, game.map.height)
     gameState.players.forEach(player => {
       player.units = []
       player.cities = new Map()
       player.cityTileCount = 0
     })
     gameState.turn = game.state.turn
+    gameState.seed = game.configs.seed
 
-    // Map (resources, roads)
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const cell = game.map.getCell(x, y)
@@ -121,13 +123,13 @@ export default class Convert {
       }
     }
 
-    // Players (units, cities, CityTiles)
-    gameState.players.forEach(player => {
-      const teamState: Game.TeamState = game.state.teamStates[player.team as LuxUnit.TEAM]
+    TEAMS.forEach(team => {
+      const teamState: Game.TeamState = game.state.teamStates[team]
+      const player = gameState.players[team]
       player.researchPoints = teamState.researchPoints
 
       teamState.units.forEach(unit => {
-        gameState.players[player.team as LuxUnit.TEAM].units.push(
+        player.units.push(
           new Unit(
             unit.team,
             unit.type,
@@ -152,14 +154,26 @@ export default class Convert {
       )
       gameState.players[city.team].cities.set(city.id, newCity)
 
-      // log(`parsing city with id = ${city.id}`)
-      // log(`it has ${city.citycells.length} cells`)
-
       city.citycells.forEach(citycell => {
         const cityTile = newCity.addCityTile(citycell.pos.x, citycell.pos.y, citycell.citytile.cooldown)
         gameState.map.getCell(cityTile.pos.x, cityTile.pos.y).citytile = cityTile
-        gameState.players[city.team].cityTileCount += 1
+        gameState.players[city.team].cityTileCount++
       })
     })
+  }
+
+  static initGameState(playerid: LuxUnit.TEAM): GameState {
+    const gameState = new GameState()
+    gameState.map = new GameMap(0, 0)
+    gameState.players = TEAMS.map(team => new Player(team))
+    gameState.id = playerid
+    return gameState
+  }
+
+  /** Game => GameState */
+  static toGameState(game: Game, playerid: LuxUnit.TEAM): GameState {
+    const gameState = Convert.initGameState(playerid)
+    Convert.updateGameState(gameState, game)
+    return gameState
   }
 }

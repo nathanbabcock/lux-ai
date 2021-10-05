@@ -1,24 +1,26 @@
-import { Game, LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
-import { plainToClass } from 'class-transformer'
-import { GameState } from '../lux/Agent'
+import { GameMap, LuxDesignLogic, LuxMatchState } from '@lux-ai/2021-challenge'
 import { Cell } from '../lux/Cell'
-import Convert from './Convert'
 import GAME_CONSTANTS from '../lux/game_constants.json'
-import DUMMY_GAMESTATE from './dummy-gamestate.json'
+import { Position } from '../lux/Position'
+import Convert from './Convert'
+import { simulate } from './Sim'
 import { initMatch } from './TreeSearch'
 import Turn from './Turn'
-import { simulate } from './Sim'
 
 describe('Sim', () => {
-  const init = async () => {
-    const match = await initMatch('replays/test-gather-closest-resource.json')
-    const gameState = plainToClass(GameState, DUMMY_GAMESTATE)
-    const serializedState: SerializedState = Convert.toSerializedState(gameState)
-    LuxDesignLogic.reset(match, serializedState)
-    const turn = new Turn(gameState)
+  const init = async (replay?: string) => {
+    const match = await initMatch({
+      storeReplay: !!replay,
+      out: replay,
+      mapType: GameMap.Types.DEBUG,
+      width: 16,
+      height: 16,
+    })
     const game = (match.state as LuxMatchState).game
+    const gameState = Convert.toGameState(game, 0)
+    const turn = new Turn(gameState)
 
-    return { match, gameState, serializedState, turn, game }
+    return { match, gameState, turn, game }
   }
 
   test('Initializes a Turn object', async () => {
@@ -41,15 +43,20 @@ describe('Sim', () => {
   })
 
   test('Gather closest resources', async () => {
-    const { match, turn } = await init()
+    const { match, turn } = await init('replays/test-gather-closest-resource.json')
 
     const unit = turn.player.units[0]
-    const oldPos = unit.pos
+    unit.pos = new Position(5, 10)
+    const serializedState = Convert.toSerializedState(turn.gameState)
+    LuxDesignLogic.reset(match, serializedState)
     const action = turn.gatherClosestResource(unit)
-    const game = await simulate(match, turn.gameState.id, action)
-    const newPos = game.getUnit(unit.team, unit.id).pos
-    
-    expect(newPos.equals(oldPos)).toBe(false)
+    let game = await simulate(match, turn.gameState.id, action)
+    turn.update(game)
+
+    for (let i = 0; i < 39; i++) {
+      game = await simulate(match, turn.gameState.id, turn.gatherClosestResource(unit))
+      turn.update(game)
+    }
 
     game.replay.writeOut(match.results)
   })

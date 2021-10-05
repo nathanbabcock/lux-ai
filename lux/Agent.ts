@@ -13,15 +13,15 @@ import { Unit } from "./Unit";
 const parse = new Parser(' ');
 
 export class GameState {
-  id: number;
-
   @Type(() => GameMap)
   map: GameMap;
-
+  
   @Type(() => Player)
   players: Array<Player>;
-
+  
+  id: number;
   turn: number;
+  seed?: number;
 }
 
 /**

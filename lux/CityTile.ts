@@ -1,6 +1,7 @@
 /** CityTile and Unit are both actionable and can return action strings to send to engine  */
 import { Type } from 'class-transformer';
 import {Position} from "./Position";
+import 'reflect-metadata';
 
 export class CityTile {
   @Type(() => Position)

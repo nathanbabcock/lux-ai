@@ -1,17 +1,17 @@
-import { Game, LuxDesign, LuxDesignLogic, LuxMatchConfigs, LuxMatchState, SerializedState, Unit as LuxUnit } from '@lux-ai/2021-challenge'
+import { Game, GameMap, LuxDesign, LuxDesignLogic, LuxMatchConfigs, LuxMatchState, SerializedState, Unit as LuxUnit } from '@lux-ai/2021-challenge'
 import { create, Logger, Match } from 'dimensions-ai'
 import { DeepPartial } from 'dimensions-ai/lib/main/utils/DeepPartial'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Unit } from '../lux/Unit'
 import { log } from './logging'
 
-export async function initMatch(replay: string | undefined = undefined): Promise<Match> {
+export async function initMatch(config: DeepPartial<LuxMatchConfigs & Match.Configs> = {}): Promise<Match> {
   const lux2021 = new LuxDesign('lux_ai_2021')
 
   //typescript will complain if dimensions is one version but lux ai is built using another one
   const myDimension = create(lux2021, {
     name: 'Lux AI 2021',
-    loggingLevel: Logger.LEVEL.NONE,
+    loggingLevel: Logger.LEVEL.ERROR,
     activateStation: false,
     observe: false,
     createBotDirectories: false,
@@ -20,15 +20,15 @@ export async function initMatch(replay: string | undefined = undefined): Promise
   const configs: DeepPartial<LuxMatchConfigs & Match.Configs> = {
     detached: true,
     agentOptions: { detached: true },
-    storeReplay: !!replay,
-    out: replay,
-    statefulReplay: true,
+    storeReplay: config.storeReplay,
+    out: config.out,
+    statefulReplay: config.statefulReplay === false ? false : true,
     storeErrorLogs: false,
     loggingLevel: Logger.LEVEL.ERROR,
-    // width: gameState.map.width,
-    // height: gameState.map.height,
-    //seed: parseInt(json.config.seed),
-    //mapType: json.config.mapType,
+    width: config.width,
+    height: config.height,
+    seed: config.seed,
+    mapType: config.mapType || GameMap.Types.RANDOM,
     parameters: {
       MAX_DAYS: GAME_CONSTANTS.PARAMETERS.MAX_DAYS //json.config.episodeSteps,
     },
@@ -37,12 +37,12 @@ export async function initMatch(replay: string | undefined = undefined): Promise
   const match = await myDimension.createMatch(
     [
       {
-        file: "blank",
-        name: "team-0",
+        file: 'blank',
+        name: 'team-0',
       },
       {
-        file: "blank",
-        name: "team-1",
+        file: 'blank',
+        name: 'team-1',
       },
     ],
     configs

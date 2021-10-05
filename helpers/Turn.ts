@@ -1,4 +1,4 @@
-import { Position } from '@lux-ai/2021-challenge'
+import { Game, Position } from '@lux-ai/2021-challenge'
 import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { GameMap } from '../lux/GameMap'
@@ -6,6 +6,7 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Player } from '../lux/Player'
 import { Unit } from '../lux/Unit'
 import Cluster, { getClusters } from './Cluster'
+import Convert from './Convert'
 import Director from './Director'
 import { getPerpendicularDirections, getResources } from './helpers'
 
@@ -21,6 +22,11 @@ export default class Turn {
   director: Director
 
   constructor(gameState: GameState) {
+    this.setFromGameState(gameState)
+  }
+
+  update(game: Game) {
+    const gameState = Convert.toGameState(game, this.gameState.id)
     this.setFromGameState(gameState)
   }
 
