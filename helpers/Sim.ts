@@ -1,4 +1,4 @@
-import { Game, LuxDesignLogic, LuxMatchState } from '@lux-ai/2021-challenge'
+import { Game, LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
 import { Match, MatchEngine } from 'dimensions-ai'
 import { turn } from '../agents/tree-search'
 import { annotate, GameState } from '../lux/Agent'
@@ -13,6 +13,15 @@ export type MissionSimulation = {
   plan: string[]
   annotations: string[]
   outcome: boolean
+}
+
+export function reset(match: Match, state: GameState | SerializedState): Game {
+  if (state instanceof GameState)
+    state = Convert.toSerializedState(state)
+  LuxDesignLogic.reset(match, state)
+  let game = (match.state as LuxMatchState).game
+  game.replay.data.stateful = [game.toStateObject()]
+  return game
 }
 
 export async function simulate(match: Match, playerID: number, actions: string | string[]): Promise<Game> {

@@ -3,7 +3,7 @@ import { Cell } from '../lux/Cell'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import Convert from './Convert'
-import { simulate } from './Sim'
+import { reset, simulate } from './Sim'
 import { initMatch } from './TreeSearch'
 import Turn from './Turn'
 
@@ -30,6 +30,28 @@ describe('Sim', () => {
     expect(turn.resourceTiles[0]).toBeInstanceOf(Cell)
   })
 
+  test('Resets gamestate with manual state setting', async () => {
+    const { match, turn } = await init()
+
+    const unit = turn.gameState.players[turn.gameState.id].units[0]
+    unit.pos = new Position(5, 10)
+    const serializedState = Convert.toSerializedState(turn.gameState)
+
+    expect(serializedState.teamStates[0].units['u_1'].x).toBe(5)
+    expect(serializedState.teamStates[0].units['u_1'].y).toBe(10)
+
+    let game = reset(match, turn.gameState)
+
+    expect(game.getUnit(0, 'u_1').pos.equals(new Position(5, 10))).toBe(true)
+
+    // NOTE: replays are purely deterministic and will NOT reflect this state-setting
+    // Current theory is that they start from scratch, creating a map (incl. unit spawns)
+    // from the map seed (with manual override in mapgen for MapType.DEBUG),
+    // and then use dead reckoning to reconstruct the state from the replay.
+    // The "stateful" replay option, added later as a debug convenience only,
+    // will not be able to reproduce this state-setting inside the Lux AI Viewer.
+  })
+
   test('Move a unit in a direction', async () => {
     const { match, turn } = await init()
 
@@ -45,17 +67,17 @@ describe('Sim', () => {
   test('Gather closest resources', async () => {
     const { match, turn } = await init('replays/test-gather-closest-resource.json')
 
-    const unit = turn.player.units[0]
-    unit.pos = new Position(5, 10)
-    const serializedState = Convert.toSerializedState(turn.gameState)
-    LuxDesignLogic.reset(match, serializedState)
-    const action = turn.gatherClosestResource(unit)
+    let unit = turn.player.units[0]
+    let action = turn.gatherClosestResource(unit)
     let game = await simulate(match, turn.gameState.id, action)
     turn.update(game)
+    unit = turn.player.units[0]
 
     for (let i = 0; i < 39; i++) {
-      game = await simulate(match, turn.gameState.id, turn.gatherClosestResource(unit))
+      action = turn.gatherClosestResource(unit)
+      game = await simulate(match, turn.gameState.id, action)
       turn.update(game)
+      unit = turn.player.units[0]
     }
 
     game.replay.writeOut(match.results)
