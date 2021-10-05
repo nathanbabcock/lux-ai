@@ -28,6 +28,7 @@ export async function initMatch(config: DeepPartial<LuxMatchConfigs & Match.Conf
     width: config.width,
     height: config.height,
     seed: config.seed,
+    debugAnnotations: config.debugAnnotations || false,
     mapType: config.mapType || GameMap.Types.RANDOM,
     parameters: {
       MAX_DAYS: GAME_CONSTANTS.PARAMETERS.MAX_DAYS //json.config.episodeSteps,

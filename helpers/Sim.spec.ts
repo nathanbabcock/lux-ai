@@ -12,9 +12,10 @@ describe('Sim', () => {
     const match = await initMatch({
       storeReplay: !!replay,
       out: replay,
-      mapType: GameMap.Types.DEBUG,
+      debugAnnotations: true,
       width: 16,
       height: 16,
+      mapType: GameMap.Types.DEBUG,
     })
     const game = (match.state as LuxMatchState).game
     const gameState = Convert.toGameState(game, 0)
@@ -27,6 +28,7 @@ describe('Sim', () => {
     const match = await initMatch({
       storeReplay: !!replay,
       out: replay,
+      debugAnnotations: true,
       mapType: GameMap.Types.RANDOM,
       width: 12,
       height: 12,

@@ -12,6 +12,7 @@ describe('Clusters', () => {
       storeReplay: !!replay,
       out: replay,
       mapType: GameMap.Types.RANDOM,
+      debugAnnotations: true,
       width: 12,
       height: 12,
       seed: 123456789,
