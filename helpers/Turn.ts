@@ -1,9 +1,10 @@
-import { Game, Position } from '@lux-ai/2021-challenge'
+import { Game } from '@lux-ai/2021-challenge'
 import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { GameMap } from '../lux/GameMap'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Player } from '../lux/Player'
+import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Cluster, { getClusters } from './Cluster'
 import Convert from './Convert'
@@ -96,6 +97,15 @@ export default class Turn {
       return this.sidestep(unit, dir) || this.wait(unit)
     else
       return this.moveUnit(unit, dir)
+  }
+
+  moveTo(unit: Unit, pos: Position): string | undefined {
+    const dist = pos.distanceTo(unit.pos)
+    if (dist === 0 || !unit.canAct())
+      return unit.move(GAME_CONSTANTS.DIRECTIONS.CENTER)
+    
+    const dir = unit.pos.directionTo(pos)
+    return this.moveWithCollisionAvoidance(unit, dir)
   }
 
   gatherClosestResource(unit: Unit): string {

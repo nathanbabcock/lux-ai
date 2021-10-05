@@ -53,7 +53,7 @@ describe('Sim', () => {
   })
 
   test('Move a unit in a direction', async () => {
-    const { match, turn } = await init()
+    const { match, turn } = await init('replays/test-move-in-direction.json')
 
     const unit = turn.player.units[0]
     const oldPos = unit.pos
@@ -62,23 +62,32 @@ describe('Sim', () => {
     const newPos = game.getUnit(unit.team, unit.id).pos
 
     expect(newPos.y).toBe(oldPos.y - 1) // North is negative y (?)
+
+    game.replay.writeOut(match.results)
   })
 
-  test('Gather closest resources', async () => {
-    const { match, turn } = await init('replays/test-gather-closest-resource.json')
+  test('Move to cell', async () => {
+    const { match, turn, game } = await init('replays/test-move-to-cell.json')
+
+    const dest = new Position(4, 1)
+
+    const update = async (steps: number) => {
+      for (let i = 0; i < steps; i++) {
+        let unit = turn.player.units[0]
+        let action = turn.moveTo(unit, dest)
+        let game = await simulate(match, turn.gameState.id, action)
+        turn.update(game)
+      }
+    }
+
+    await update(5)
 
     let unit = turn.player.units[0]
-    let action = turn.gatherClosestResource(unit)
-    let game = await simulate(match, turn.gameState.id, action)
-    turn.update(game)
-    unit = turn.player.units[0]
+    expect(unit.pos.equals(dest)).toBe(true)
 
-    for (let i = 0; i < 39; i++) {
-      action = turn.gatherClosestResource(unit)
-      game = await simulate(match, turn.gameState.id, action)
-      turn.update(game)
-      unit = turn.player.units[0]
-    }
+    await update(5)
+
+    expect(unit.pos.equals(dest)).toBe(true)
 
     game.replay.writeOut(match.results)
   })
