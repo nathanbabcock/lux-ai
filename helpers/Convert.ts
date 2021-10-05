@@ -58,7 +58,7 @@ export default class Convert {
       map.push(row)
     }
 
-    const cities: any = {}
+    const cities: SerializedState['cities'] = {}
     gameState.players.forEach(player => {
       player.cities.forEach(city => {
         const cityCells: any = []

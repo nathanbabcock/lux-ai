@@ -1,5 +1,6 @@
 import {Position} from "./Position";
 import {CityTile} from "./CityTile";
+import { Type } from 'class-transformer';
 
 export interface Resource {
   type: string;
@@ -7,8 +8,12 @@ export interface Resource {
 }
 
 export class Cell {
+  @Type(() => Position)
   public pos: Position;
+
   public resource: Resource = null;
+
+  @Type(() => CityTile)
   public citytile: CityTile = null;
   public road = 0;
 

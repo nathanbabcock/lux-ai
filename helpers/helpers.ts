@@ -7,6 +7,8 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import type { Player } from '../lux/Player'
 import { Position } from '../lux/Position'
 import type { Unit } from '../lux/Unit'
+import { getClusters } from './Cluster'
+import Director from './Director'
 
 export function getClosestResourceTile(resourceTiles: Array<Cell>, player: Player, unit: Unit): Cell | null {
   // if the unit is a worker and we have space in cargo, lets find the nearest resource tile and try to mine it
@@ -182,4 +184,18 @@ export function getResourceAdjacency(cell: Cell, gameMap: GameMap): number {
 
 export function getMapCenter(gameMap: GameMap): Position {
   return new Position(Math.round(gameMap.width / 2), Math.round(gameMap.height / 2))
+}
+
+export function initTurn(gameState) {
+  const actions = new Array<string>()
+  const otherUnitMoves = new Array<Position>()
+  const player = gameState.players[gameState.id]
+  const opponent = gameState.players[(gameState.id + 1) % 2]
+  const gameMap = gameState.map
+  const resourceTiles = getResources(gameState.map)
+  const clusters = getClusters(gameMap)
+  const director = new Director()
+  director.setClusters(clusters)
+
+  return { actions, otherUnitMoves, player, opponent, gameMap, resourceTiles, clusters, director }
 }

@@ -1,11 +1,13 @@
 /** CityTile and Unit are both actionable and can return action strings to send to engine  */
+import { Type } from 'class-transformer';
 import {Position} from "./Position";
 
 export class CityTile {
-  public team: number;
-  public cityid: string;
+  @Type(() => Position)
   public pos: Position;
   public cooldown: number;
+  public team: number;
+  public cityid: string;
 
   public constructor(teamid: number, cityid: string, x: number, y: number, cooldown: number) {
     this.cityid = cityid;

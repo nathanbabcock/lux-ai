@@ -1,7 +1,7 @@
 import { Match } from 'dimensions-ai'
 import { getClusters } from '../helpers/Cluster'
 import Director from '../helpers/Director'
-import { getClosestResourceTile, getResourceAdjacency, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
+import { getClosestResourceTile, getResourceAdjacency, getResources, initTurn, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import { simulateSettlerMission } from '../helpers/Sim'
 import { initMatch } from '../helpers/TreeSearch'
@@ -12,7 +12,6 @@ import type { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 
 const agent = new Agent()
-const director = new Director()
 let match: Match
 let plan: string[] = []
 let permanentAnnotations: string[] = []
@@ -21,16 +20,7 @@ export async function turn(
   gameState: GameState,
   settlerMissionGoal?: Position,
 ): Promise<Array<string>> {
-  const actions = new Array<string>()
-  const otherUnitMoves = new Array<Position>()
-  const player = gameState.players[gameState.id]
-  const opponent = gameState.players[(gameState.id + 1) % 2]
-  const gameMap = gameState.map
-  const resourceTiles = getResources(gameState.map)
-  const clusters = getClusters(gameMap)
-  director.setClusters(clusters)
-  director.cityPlans = []
-  director.resourcePlans = []
+  const { actions, otherUnitMoves, player, opponent, gameMap, resourceTiles, clusters, director } = initTurn(gameState)
 
   const sidetext = (...messages: any[]) => 
     actions.push(annotate.sidetext(`${messages.join(' ')}\n`))

@@ -1,6 +1,7 @@
 import GAME_CONSTANTS from "./game_constants.json";
 import {Position} from "./Position";
 import {GameMap} from "./GameMap";
+import { Type } from 'class-transformer';
 
 export interface Cargo {
   wood: number;
@@ -12,6 +13,8 @@ export class Unit {
   public team: number;
   public type: number;
   public id: string;
+
+  @Type(() => Position)
   public pos: Position;
   public cooldown: number;
   public cargo: Cargo;

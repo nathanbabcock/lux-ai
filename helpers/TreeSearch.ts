@@ -5,7 +5,7 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Unit } from '../lux/Unit'
 import { log } from './logging'
 
-export async function initMatch(): Promise<Match> {
+export async function initMatch(replay: string | undefined = undefined): Promise<Match> {
   const lux2021 = new LuxDesign('lux_ai_2021')
 
   //typescript will complain if dimensions is one version but lux ai is built using another one
@@ -20,7 +20,9 @@ export async function initMatch(): Promise<Match> {
   const configs: DeepPartial<LuxMatchConfigs & Match.Configs> = {
     detached: true,
     agentOptions: { detached: true },
-    storeReplay: false,
+    storeReplay: !!replay,
+    out: replay,
+    statefulReplay: true,
     storeErrorLogs: false,
     loggingLevel: Logger.LEVEL.ERROR,
     // width: gameState.map.width,
