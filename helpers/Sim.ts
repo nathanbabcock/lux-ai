@@ -1,5 +1,5 @@
 import { Game, LuxDesignLogic, LuxMatchState } from '@lux-ai/2021-challenge'
-import { Match } from 'dimensions-ai'
+import { Match, MatchEngine } from 'dimensions-ai'
 import { turn } from '../agents/tree-search'
 import { annotate, GameState } from '../lux/Agent'
 import { Position } from '../lux/Position'
@@ -18,7 +18,7 @@ export type MissionSimulation = {
 export async function simulate(match: Match, playerID: number, actions: string | string[]): Promise<Game> {
   if (!(actions instanceof Array))
     actions = [actions]
-  const commands = actions.map(action => ({
+  const commands: MatchEngine.Command[] = actions.map(action => ({
     command: action,
     agentID: playerID,
   }))

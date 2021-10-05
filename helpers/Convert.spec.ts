@@ -1,6 +1,7 @@
 import { LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
 import { plainToClass } from 'class-transformer'
 import { GameState } from '../lux/Agent'
+import { City } from '../lux/City'
 import { GameMap } from '../lux/GameMap'
 import Convert from './Convert'
 import DUMMY_GAMESTATE from './dummy-gamestate.json'
@@ -11,6 +12,14 @@ describe('JSON => GameState (class-transformer)', () => {
   test('Creates GameMap instance', () => {
     const gameState = plainToClass(GameState, DUMMY_GAMESTATE)
     expect(gameState.map).toBeInstanceOf(GameMap)
+  })
+
+  test('Creates Map of city IDs to cities', () => {
+    const gameState = plainToClass(GameState, DUMMY_GAMESTATE)
+    const cities = gameState.players[0].cities
+
+    expect(cities).toBeInstanceOf(Map)
+    expect(cities.get('c_1')).toBeInstanceOf(City)
   })
 })
 

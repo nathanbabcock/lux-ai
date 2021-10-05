@@ -1,10 +1,13 @@
 // all data related to a city
+import { Type } from 'class-transformer';
 import {CityTile} from "./CityTile";
 
 export class City {
   public cityid: string;
   public team: number;
   public fuel: number;
+
+  @Type(() => CityTile)
   public citytiles = new Array<CityTile>();
   public lightUpkeep: number;
 
