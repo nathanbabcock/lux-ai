@@ -40,15 +40,15 @@ describe('Sim', () => {
     expect(newPos.y).toBe(oldPos.y - 1) // North is negative y (?)
   })
 
-  // test('Gather closest resources', async () => {
-  //   const { match, turn } = await init()
+  test('Gather closest resources', async () => {
+    const { match, turn } = await init()
 
-  //   const unit = turn.player.units[0]
-  //   const oldPos = unit.pos
-  //   const action = turn.gatherClosestResource(unit)
-  //   const game = await simulate(match, turn.gameState.id, action)
-  //   const newPos = game.getUnit(unit.team, unit.id).pos
+    const unit = turn.player.units[0]
+    const oldPos = unit.pos
+    const action = turn.gatherClosestResource(unit)
+    const game = await simulate(match, turn.gameState.id, action)
+    const newPos = game.getUnit(unit.team, unit.id).pos
     
-  //   expect(newPos.equals(oldPos)).toBe(false)
-  // })
+    expect(newPos.equals(oldPos)).toBe(false)
+  })
 })
