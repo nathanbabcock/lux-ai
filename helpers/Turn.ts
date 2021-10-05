@@ -1,5 +1,5 @@
 import { Game } from '@lux-ai/2021-challenge'
-import { GameState } from '../lux/Agent'
+import { annotate, GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { GameMap } from '../lux/GameMap'
 import GAME_CONSTANTS from '../lux/game_constants.json'
@@ -9,7 +9,7 @@ import { Unit } from '../lux/Unit'
 import Cluster, { getClusters } from './Cluster'
 import Convert from './Convert'
 import Director from './Director'
-import { getPerpendicularDirections, getResources } from './helpers'
+import { getPerpendicularDirections, getResourceAdjacency, getResources } from './helpers'
 
 export default class Turn {
   gameState: GameState
@@ -115,5 +115,26 @@ export default class Turn {
     this.director.resourcePlans.push(closestResourceTile.pos)
     const dir = unit.pos.directionTo(closestResourceTile.pos)
     return this.moveWithCollisionAvoidance(unit, dir)
+  }
+
+  annotateClusters(unit: Unit): string[] {
+    const annotations = []
+    this.clusters.forEach(cluster => {
+      // actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
+
+      cluster.cells.forEach(cell => {
+        annotations.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, this.gameMap)}`))
+      })
+
+      const perimeter = cluster.getPerimeter(this.gameMap)
+      perimeter.forEach(cell => {
+        annotations.push(annotate.circle(cell.pos.x, cell.pos.y))
+        annotations.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, this.gameMap)}`))
+      })
+
+      const citySite = cluster.getCitySite(this.gameMap)
+      if (citySite) annotations.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
+    })
+    return annotations
   }
 }

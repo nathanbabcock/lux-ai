@@ -1,10 +1,9 @@
 import { Match } from 'dimensions-ai'
-import { getClusters } from '../helpers/Cluster'
-import Director from '../helpers/Director'
-import { getClosestResourceTile, getResourceAdjacency, getResources, initTurn, moveWithCollisionAvoidance } from '../helpers/helpers'
+import { getClosestResourceTile, getResourceAdjacency, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import { simulateSettlerMission } from '../helpers/Sim'
 import { initMatch } from '../helpers/TreeSearch'
+import Turn from '../helpers/Turn'
 import { chooseRandom } from '../helpers/util'
 import { Agent, annotate, GameState } from '../lux/Agent'
 import GAME_CONSTANTS from '../lux/game_constants.json'
@@ -20,7 +19,7 @@ export async function turn(
   gameState: GameState,
   settlerMissionGoal?: Position,
 ): Promise<Array<string>> {
-  const { actions, otherUnitMoves, player, opponent, gameMap, resourceTiles, clusters, director } = initTurn(gameState)
+  const { actions, otherUnitMoves, player, gameMap, resourceTiles, clusters, director } = new Turn(gameState)
 
   const sidetext = (...messages: any[]) => 
     actions.push(annotate.sidetext(`${messages.join(' ')}\n`))

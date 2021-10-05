@@ -150,4 +150,21 @@ describe('Sim', () => {
 
     game.replay.writeOut(match.results)
   })
+
+  test('Expand to new cluster', async () => {
+    const { match, turn, game } = await initSeed('replays/test-expand-to-new-cluster.json')
+
+    for (let i = 0; i < 10; i++) {
+      let unit = turn.player.units[0]
+      let action = turn.gatherClosestResource(unit)
+      let game = await simulate(match, turn.gameState.id, action)
+      turn.update(game)
+    }
+
+    let unit = turn.player.units[0]
+    expect(unit.cargo.wood).toBe(100)
+    expect(unit.getCargoSpaceLeft()).toBe(0)
+
+    game.replay.writeOut(match.results)
+  })
 })
