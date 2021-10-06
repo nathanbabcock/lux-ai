@@ -5,7 +5,7 @@ import Sim from './Sim'
 
 describe('Clusters', () => {
   const initSeed = async (replay?: string) =>
-    await Sim.init({
+    await Sim.create({
       storeReplay: !!replay,
       out: replay,
       mapType: GameMap.Types.RANDOM,

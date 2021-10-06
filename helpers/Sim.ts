@@ -26,17 +26,27 @@ export default class Sim {
   private dimension?: Dimension
   private configs: DeepPartial<LuxMatchConfigs & Match.Configs>
 
-  static async init(
+  /** @deprecated Prefer the static async Sim.create() to instantiate and initialize in one statement */
+  constructor() {}
+
+  static async create(
     config: DeepPartial<LuxMatchConfigs & Match.Configs> = {},
     playerID: number = 0,
   ): Promise<Sim> {
     const sim = new Sim()
+    await sim.init(config, playerID)
+    return sim
+  }
 
-    sim.playerID = playerID
-    sim.design = new LuxDesign('lux_ai_2021')
+  async init(
+    config: DeepPartial<LuxMatchConfigs & Match.Configs> = {},
+    playerID: number = 0,
+  ) {
+    this.playerID = playerID
+    this.design = new LuxDesign('lux_ai_2021')
   
     //typescript will complain if dimensions is one version but lux ai is built using another one
-    sim.dimension = create(sim.design, {
+    this.dimension = create(this.design, {
       name: 'Lux AI 2021',
       loggingLevel: Logger.LEVEL.ERROR,
       activateStation: false,
@@ -44,7 +54,7 @@ export default class Sim {
       createBotDirectories: false,
     })
   
-    sim.configs = {
+    this.configs = {
       detached: true,
       agentOptions: { detached: true },
       storeReplay: config.storeReplay,
@@ -62,7 +72,7 @@ export default class Sim {
       },
     }
 
-    sim.match = await sim.dimension.createMatch([
+    this.match = await this.dimension.createMatch([
       {
         file: 'blank',
         name: 'team-0',
@@ -71,9 +81,7 @@ export default class Sim {
         file: 'blank',
         name: 'team-1',
       },
-    ], sim.configs)
-
-    return sim
+    ], this.configs)
   }
 
   reset(state: GameState | SerializedState): SimState {

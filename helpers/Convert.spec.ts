@@ -80,7 +80,7 @@ describe('GameState => SerializedState', () => {
 
 describe('SerializedState => Game (Lux AI internal)', () => {
   const initialize = async () => {
-    const sim = await Sim.init()
+    const sim = await Sim.create()
     const gameState = plainToClass(GameState, DUMMY_GAMESTATE)
     const serializedState: SerializedState = Convert.toSerializedState(gameState)
     sim.reset(serializedState)
@@ -122,7 +122,7 @@ describe('SerializedState => Game (Lux AI internal)', () => {
 
 describe('Game => GameState (round trip)', () => {
   const initialize = async () => {
-    const sim = await Sim.init()
+    const sim = await Sim.create()
     const originalGameState = plainToClass(GameState, DUMMY_GAMESTATE)
     const serializedState: SerializedState = Convert.toSerializedState(originalGameState)
     sim.reset(serializedState)

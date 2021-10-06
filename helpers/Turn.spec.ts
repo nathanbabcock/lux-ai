@@ -7,7 +7,7 @@ import Sim from './Sim'
 
 describe('Turn', () => {
   const initDebug = async (replay?: string) =>
-    await Sim.init({
+    await Sim.create({
       storeReplay: !!replay,
       out: replay,
       debugAnnotations: true,
@@ -17,7 +17,7 @@ describe('Turn', () => {
     })
 
   const initSeed = async (replay?: string) => 
-    await Sim.init({
+    await Sim.create({
       storeReplay: !!replay,
       out: replay,
       debugAnnotations: true,
