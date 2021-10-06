@@ -117,6 +117,25 @@ export default class Turn {
     return this.moveWithCollisionAvoidance(unit, dir)
   }
 
+  idle(unit: Unit): string {
+    return this.moveWithCollisionAvoidance(unit, GAME_CONSTANTS.DIRECTIONS.CENTER)
+  }
+
+  /**
+   * - Gather resources if necessary
+   * - Walk to city position
+   * - Build city
+   */
+  buildCity(unit: Unit, pos: Position): string {
+    if (!unit.canAct())
+      return this.idle(unit)
+    if (unit.getCargoSpaceLeft() > 0)
+      return this.gatherClosestResource(unit)
+    if (unit.pos.distanceTo(pos) === 0)
+      return unit.buildCity()
+    return this.moveTo(unit, pos)
+  }
+
   annotateClusters(unit: Unit): string[] {
     const annotations = []
     this.clusters.forEach(cluster => {

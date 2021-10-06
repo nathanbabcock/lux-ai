@@ -25,7 +25,7 @@ describe('Clusters', () => {
   }
 
   test('Get clusters', async () => {
-    const { match, gameState, game, turn } = await initSeed('replays/test-get-clusters.json')
+    const { match, game, turn } = await initSeed('replays/test-get-clusters.json')
 
     const unit = turn.player.units[0]
     const annotations = turn.annotateClusters(unit)

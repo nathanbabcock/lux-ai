@@ -153,19 +153,18 @@ describe('Sim', () => {
     game.replay.writeOut(match.results)
   })
 
-  test('Expand to new cluster', async () => {
-    const { match, turn, game } = await initSeed('replays/test-expand-to-new-cluster.json')
+  test('Build city at location', async () => {
+    const { match, turn, game } = await initSeed('replays/test-build-city-at-location.json')
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 16; i++) {
       let unit = turn.player.units[0]
-      let action = turn.gatherClosestResource(unit)
+      let action = turn.buildCity(unit, new Position(8, 5))
       let game = await simulate(match, turn.gameState.id, action)
       turn.update(game)
     }
 
-    let unit = turn.player.units[0]
-    expect(unit.cargo.wood).toBe(100)
-    expect(unit.getCargoSpaceLeft()).toBe(0)
+    const cities = Array.from(turn.player.cities.values())
+    expect(cities.length).toBe(2)
 
     game.replay.writeOut(match.results)
   })
