@@ -53,9 +53,9 @@ describe('Turn', () => {
     // NOTE: replays are purely deterministic and will NOT reflect this state-setting
     // Current theory is that they start from scratch, creating a map (incl. unit spawns)
     // from the map seed (with manual override in mapgen for MapType.DEBUG),
-    // and then use dead reckoning to reconstruct the state from the replay.
+    // and then use dead reckoning to iteratively reconstruct the state from the replay.
     // The "stateful" replay option, added later as a debug convenience only,
-    // will not be able to reproduce this state-setting inside the Lux AI Viewer.
+    // will not be able to reproduce this state-setting behavior inside the Lux AI Viewer.
   })
 
   test('Move a unit in a direction', async () => {
@@ -75,26 +75,21 @@ describe('Turn', () => {
 
   test('Move a unit to position', async () => {
     const sim = await initDebug('replays/test-move-to-position.json')
-    const turn = sim.getTurn()
-
     const dest = new Position(4, 1)
 
     const update = async (steps: number) => {
-      for (let i = 0; i < steps; i++) {
-        let unit = turn.player.units[0]
-        let action = turn.moveTo(unit, dest)
-        let { game } = await sim.action(action)
-        turn.update(game)
-      }
+      for (let i = 0; i < steps; i++)
+        await sim.turn(turn => turn.moveTo(turn.player.units[0], dest))
     }
 
     await update(5)
 
-    let unit = turn.player.units[0]
+    let unit = sim.getTurn().player.units[0]
     expect(unit.pos.equals(dest)).toBe(true)
 
     await update(5)
 
+    unit = sim.getTurn().player.units[0]
     expect(unit.pos.equals(dest)).toBe(true)
 
     sim.saveReplay()
@@ -117,11 +112,12 @@ describe('Turn', () => {
 
     await update(5)
 
-    let unit = turn.player.units[0]
+    let unit = sim.getTurn().player.units[0]
     expect(unit.pos.equals(dest)).toBe(true)
 
     await update(5)
 
+    unit = sim.getTurn().player.units[0]
     expect(unit.pos.equals(dest)).toBe(true)
 
     sim.saveReplay()
@@ -129,16 +125,11 @@ describe('Turn', () => {
 
   test('Gather closest resource', async () => {
     const sim = await initSeed('replays/test-gather-closest-resource.json')
-    const turn = sim.getTurn()
 
-    for (let i = 0; i < 10; i++) {
-      let unit = turn.player.units[0]
-      let action = turn.gatherClosestResource(unit)
-      let { game } = await sim.action(action)
-      turn.update(game)
-    }
+    for (let i = 0; i < 10; i++)
+      await sim.turn(turn => turn.gatherClosestResource(turn.player.units[0]))
 
-    let unit = turn.player.units[0]
+    let unit = sim.getTurn().player.units[0]
     expect(unit.cargo.wood).toBe(100)
     expect(unit.getCargoSpaceLeft()).toBe(0)
 
@@ -147,22 +138,12 @@ describe('Turn', () => {
 
   test('Build city at location', async () => {
     const sim = await initSeed('replays/test-build-city-at-location.json')
-    const turn = sim.getTurn()
+    for (let i = 0; i < 16; i++)
+      await sim.turn(turn => turn.buildCity(turn.player.units[0], new Position(8, 5)))
 
-    for (let i = 0; i < 16; i++) {
-      let unit = turn.player.units[0]
-      let action = turn.buildCity(unit, new Position(8, 5))
-      let { game } = await sim.action(action)
-      turn.update(game)
-    }
-
-    const cities = Array.from(turn.player.cities.values())
+    const cities = Array.from(sim.getTurn().player.cities.values())
     expect(cities.length).toBe(2)
 
     sim.saveReplay()
-  })
-
-  test('Simulate building city at location', async () => {
-    // TODO
   })
 })
