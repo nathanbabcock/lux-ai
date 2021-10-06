@@ -1,32 +1,10 @@
-import { GameMap } from '@lux-ai/2021-challenge'
 import { Cell } from '../lux/Cell'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import Convert from './Convert'
-import Sim from './Sim'
+import { initDebug, initSeed } from './test-util'
 
 describe('Turn', () => {
-  const initDebug = async (replay?: string) =>
-    await Sim.create({
-      storeReplay: !!replay,
-      out: replay,
-      debugAnnotations: true,
-      width: 16,
-      height: 16,
-      mapType: GameMap.Types.DEBUG,
-    })
-
-  const initSeed = async (replay?: string) => 
-    await Sim.create({
-      storeReplay: !!replay,
-      out: replay,
-      debugAnnotations: true,
-      mapType: GameMap.Types.RANDOM,
-      width: 12,
-      height: 12,
-      seed: 123456789,
-    })
-
   test('Initializes a Turn object', async () => {
     const sim = await initDebug()
     const turn = sim.getTurn()
