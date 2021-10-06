@@ -6,9 +6,8 @@ import Convert from './Convert'
 import Sim from './Sim'
 
 describe('Turn', () => {
-  const initDebug = async (replay?: string) => {
-    const sim = new Sim()
-    await sim.init({
+  const initDebug = async (replay?: string) =>
+    await Sim.init({
       storeReplay: !!replay,
       out: replay,
       debugAnnotations: true,
@@ -16,12 +15,9 @@ describe('Turn', () => {
       height: 16,
       mapType: GameMap.Types.DEBUG,
     })
-    return sim
-  }
 
-  const initSeed = async (replay?: string) => {
-    const sim = new Sim()
-    await sim.init({
+  const initSeed = async (replay?: string) => 
+    await Sim.init({
       storeReplay: !!replay,
       out: replay,
       debugAnnotations: true,
@@ -30,8 +26,6 @@ describe('Turn', () => {
       height: 12,
       seed: 123456789,
     })
-    return sim
-  }
 
   test('Initializes a Turn object', async () => {
     const sim = await initDebug()

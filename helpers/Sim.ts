@@ -22,22 +22,21 @@ export default class Sim {
   public match?: Match
   public playerID?: number
 
-  // public turn?: Turn
-  // public gameState?: GameState
-
   private design?: LuxDesign
   private dimension?: Dimension
   private configs: DeepPartial<LuxMatchConfigs & Match.Configs>
 
-  async init(
+  static async init(
     config: DeepPartial<LuxMatchConfigs & Match.Configs> = {},
     playerID: number = 0,
-  ): Promise<Match> {
-    this.playerID = playerID
-    this.design = new LuxDesign('lux_ai_2021')
+  ): Promise<Sim> {
+    const sim = new Sim()
+
+    sim.playerID = playerID
+    sim.design = new LuxDesign('lux_ai_2021')
   
     //typescript will complain if dimensions is one version but lux ai is built using another one
-    this.dimension = create(this.design, {
+    sim.dimension = create(sim.design, {
       name: 'Lux AI 2021',
       loggingLevel: Logger.LEVEL.ERROR,
       activateStation: false,
@@ -45,7 +44,7 @@ export default class Sim {
       createBotDirectories: false,
     })
   
-    this.configs = {
+    sim.configs = {
       detached: true,
       agentOptions: { detached: true },
       storeReplay: config.storeReplay,
@@ -63,7 +62,7 @@ export default class Sim {
       },
     }
 
-    this.match = await this.dimension.createMatch([
+    sim.match = await sim.dimension.createMatch([
       {
         file: 'blank',
         name: 'team-0',
@@ -72,9 +71,9 @@ export default class Sim {
         file: 'blank',
         name: 'team-1',
       },
-    ], this.configs)
+    ], sim.configs)
 
-    return this.match
+    return sim
   }
 
   reset(state: GameState | SerializedState): SimState {

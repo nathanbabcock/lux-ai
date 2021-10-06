@@ -4,9 +4,8 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import Sim from './Sim'
 
 describe('Clusters', () => {
-  const initSeed = async (replay?: string) => {
-    const sim = new Sim()
-    await sim.init({
+  const initSeed = async (replay?: string) =>
+    await Sim.init({
       storeReplay: !!replay,
       out: replay,
       mapType: GameMap.Types.RANDOM,
@@ -15,8 +14,6 @@ describe('Clusters', () => {
       height: 12,
       seed: 123456789,
     })
-    return sim
-  }
 
   test('Get clusters', async () => {
     const sim = await initSeed('replays/test-get-clusters.json')
