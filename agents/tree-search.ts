@@ -4,7 +4,7 @@ import Convert from '../helpers/Convert'
 import Director from '../helpers/Director'
 import { getClosestResourceTile, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
-import { initMatch } from '../helpers/Sim'
+import Sim from '../helpers/Sim'
 import { firstCityTreeSearch } from '../helpers/TreeSearch'
 import { Agent, annotate, GameState } from '../lux/Agent'
 import GAME_CONSTANTS from '../lux/game_constants.json'
@@ -122,7 +122,8 @@ async function main() {
   log('Tree Search Agent')
   log('=================')
 
-  match = await initMatch()
+  const sim = await Sim.create()
+  match = sim.match
   log('Match initialized')
 
   agent.run(turn)

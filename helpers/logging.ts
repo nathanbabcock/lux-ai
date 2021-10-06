@@ -18,3 +18,20 @@ export function log(...messages: any[]) {
     // This is the case on Kaggle submissions, run in isolation with `--storeReplays=false`
   }
 }
+
+/** Wraps a function call in a try-catch. Is this convenient, or just incredibly lazy? */
+export function _try(fn: Function): void {
+  try {
+    fn()
+  } catch (e) {
+    log(e.stack)
+  }
+}
+
+export async function tryAsync(fn: Function): Promise<void> {
+  try {
+    await fn()
+  } catch (e) {
+    log(e.stack)
+  }
+}

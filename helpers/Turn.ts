@@ -31,6 +31,10 @@ export default class Turn {
     this.setFromGameState(gameState)
   }
 
+  sidetext(...messages: any[]) {
+    this.actions.push(annotate.sidetext(`${messages.join(' ')}\n`))
+  }
+
   /** Reinitialize existing Turn object from given GameState */
   setFromGameState(gameState: GameState) {
     this.gameState = gameState
@@ -127,6 +131,7 @@ export default class Turn {
    * - Build city
    */
   buildCity(unit: Unit, pos: Position): string {
+    if (!unit) return
     if (!unit.canAct())
       return this.idle(unit)
     if (unit.getCargoSpaceLeft() > 0)
@@ -155,5 +160,9 @@ export default class Turn {
       if (citySite) annotations.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
     })
     return annotations
+  }
+
+  countCities(): number {
+    return Array.from(this.player.cities.entries()).length
   }
 }

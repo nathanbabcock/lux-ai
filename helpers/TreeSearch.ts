@@ -4,7 +4,7 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Unit } from '../lux/Unit'
 import { log } from './logging'
 
-function countCities(cities: Game['cities'], team: LuxUnit.TEAM) {
+export function countCities(cities: Game['cities'], team: LuxUnit.TEAM) {
   let count = 0
 
   cities.forEach((city) => {

@@ -26,6 +26,26 @@ export default class Sim {
   private dimension?: Dimension
   private configs: DeepPartial<LuxMatchConfigs & Match.Configs>
 
+  getGame(): Game {
+    return (this.match.state as LuxMatchState).game
+  }
+
+  getGameState(): GameState {
+    const game = this.getGame()
+    return Convert.toGameState(game, this.playerID)
+  }
+
+  getTurn(): Turn {
+    return new Turn(this.getGameState())
+  }
+
+  getSimState(): SimState {
+    const game = this.getGame()
+    const gameState = Convert.toGameState(game, this.playerID)
+    const turn = new Turn(gameState)
+    return { game, gameState, turn }
+  }
+  
   /** @deprecated Prefer the static async Sim.create() to instantiate and initialize in one statement */
   constructor() {}
 
@@ -84,9 +104,7 @@ export default class Sim {
     ], this.configs)
   }
 
-  reset(state: GameState | SerializedState): SimState {
-    if (state instanceof GameState)
-      state = Convert.toSerializedState(state)
+  reset(state: SerializedState): SimState {
     LuxDesignLogic.reset(this.match, state)
     let game = this.getGame()
     game.replay.data.stateful = [game.toStateObject()]
@@ -118,24 +136,47 @@ export default class Sim {
     game.replay.writeOut(this.match.results)
   }
 
-  getGame(): Game {
-    return (this.match.state as LuxMatchState).game
-  }
+  async settler(
+    unit: Unit,
+    destination: Position,
+    gameState: GameState
+  ): Promise<MissionSimulation> {
+    const SIM_DURATION = 360
+    let outcome = false
+    const turnActions: string[] = []
+    const annotations: string[] = [
+      annotate.line(unit.pos.x, unit.pos.y, destination.x, destination.y)
+    ]
 
-  getGameState(): GameState {
-    const game = this.getGame()
-    return Convert.toGameState(game, this.playerID)
-  }
+    this.reset(Convert.toSerializedState(gameState))
 
-  getTurn(): Turn {
-    return new Turn(this.getGameState())
-  }
+    for (let i = 0; i < SIM_DURATION; i++) {
+      const turn = this.getTurn()
+      const action = turn.buildCity(turn.player.units[0], destination)
+      turnActions.push(action)
+      await this.action(action)
+      let newUnit = this.getTurn().player.units[0]
+      if (!newUnit) break
+      const cityTile = this.getGameState().map.getCellByPos(destination).citytile
+      if (cityTile && cityTile.team === unit.team) {
+        // team built city
+        outcome = true
+        break
+      } else if (cityTile && cityTile.team !== unit.team) {
+        // enemy built city
+        break
+      }
 
-  getSimState(): SimState {
-    const game = this.getGame()
-    const gameState = Convert.toGameState(game, this.playerID)
-    const turn = new Turn(gameState)
-    return { game, gameState, turn }
+      annotations.push(annotate.circle(newUnit.pos.x, newUnit.pos.y))
+      annotations.push(annotate.text(newUnit.pos.x, newUnit.pos.y, `#${i}`))
+    }
+
+    return {
+      plan: turnActions,
+      annotations,
+      gameState: this.getGameState(),
+      outcome,
+    }
   }
 }
 
@@ -144,79 +185,4 @@ export type MissionSimulation = {
   plan: string[]
   annotations: string[]
   outcome: boolean
-}
-
-export async function simulateSettlerMission(
-  unit: Unit,
-  destination: Position,
-  gameState: GameState,
-  match: Match,
-  getActions: typeof turn
-): Promise<MissionSimulation> {
-  try {
-    const MAX_SIM_TURNS = 40
-
-    gameState = clone(gameState)
-    const plan: string[] = []
-    const annotations: string[] = [
-      annotate.line(unit.pos.x, unit.pos.y, destination.x, destination.y)
-    ]
-    const serializedState = Convert.toSerializedState(gameState)
-    LuxDesignLogic.reset(match, serializedState)
-    let cityBuilt = false
-    let unitDied = false
-    let simTurns = 0
-
-    const getMatchUnit = () =>
-      (match.state as LuxMatchState).game.getUnit(unit.team, unit.id)
-
-    while (!cityBuilt && !unitDied && simTurns < MAX_SIM_TURNS) {
-      const actions = await getActions(gameState, destination)
-      actions.forEach(action => {
-        if (action.includes(unit.id))
-          plan.push(action)
-      })
-      const commands = actions.map(action => ({
-        agentID: unit.team,
-        command: action,
-      }))
-
-      await LuxDesignLogic.update(match, commands)
-      Convert.updateGameState(gameState, (match.state as LuxMatchState).game)
-      simTurns++
-
-      if (!getMatchUnit()) {
-        unitDied = true
-        break
-      }
-
-      annotations.push(annotate.circle(getMatchUnit().pos.x, getMatchUnit().pos.y))
-      annotations.push(annotate.text(getMatchUnit().pos.x, getMatchUnit().pos.y, `#${simTurns}`))
-
-      const cityTile = gameState.map.getCellByPos(destination).citytile
-      if (cityTile && cityTile.team === unit.team) {
-        cityBuilt = true
-        break
-      } else if (cityTile && cityTile.team !== unit.team) {
-        log('simulateSettlerMission: enemy built city on destination tile')
-        break
-      }
-    }
-
-    if (cityBuilt) log('simulateSettlerMission: city built on this mission')
-    if (unitDied) log('simulateSettlerMission: unit died on this mission')
-    if (!cityBuilt && !unitDied) log('simulateSettlerMission: nothing happened')
-    
-    return {
-      gameState,
-      plan,
-      annotations,
-      outcome: cityBuilt,
-    }
-  } catch (e) {
-    log(e.stack || e.message)
-    const game = (match.state as LuxMatchState).game
-    const units = Array.from(game.getTeamsUnits(unit.team).values())
-    log(`Units = ${units.map(unit => unit.cargo.wood)}`)
-  }
 }

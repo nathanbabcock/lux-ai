@@ -114,8 +114,8 @@ describe('Turn', () => {
     sim.saveReplay()
   })
 
-  test('Build city at location', async () => {
-    const sim = await initSeed('replays/test-build-city-at-location.json')
+  test('Build city at position', async () => {
+    const sim = await initSeed('replays/test-build-city-at-position.json')
     for (let i = 0; i < 16; i++)
       await sim.turn(turn => turn.buildCity(turn.player.units[0], new Position(8, 5)))
 
