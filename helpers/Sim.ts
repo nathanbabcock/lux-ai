@@ -1,5 +1,6 @@
-import { Game, LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
-import { Match, MatchEngine } from 'dimensions-ai'
+import { Game, GameMap, LuxDesign, LuxDesignLogic, LuxMatchConfigs, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
+import { create, Logger, Match, MatchEngine } from 'dimensions-ai'
+import { DeepPartial } from 'dimensions-ai/lib/main/utils/DeepPartial'
 import { turn } from '../agents/tree-search'
 import { annotate, GameState } from '../lux/Agent'
 import { Position } from '../lux/Position'
@@ -7,12 +8,60 @@ import { Unit } from '../lux/Unit'
 import Convert from './Convert'
 import { log } from './logging'
 import { clone } from './util'
+import GAME_CONSTANTS from '../lux/game_constants.json'
 
 export type MissionSimulation = {
   gameState: GameState
   plan: string[]
   annotations: string[]
   outcome: boolean
+}
+
+export async function initMatch(config: DeepPartial<LuxMatchConfigs & Match.Configs> = {}): Promise<Match> {
+  const lux2021 = new LuxDesign('lux_ai_2021')
+
+  //typescript will complain if dimensions is one version but lux ai is built using another one
+  const myDimension = create(lux2021, {
+    name: 'Lux AI 2021',
+    loggingLevel: Logger.LEVEL.ERROR,
+    activateStation: false,
+    observe: false,
+    createBotDirectories: false,
+  })
+
+  const configs: DeepPartial<LuxMatchConfigs & Match.Configs> = {
+    detached: true,
+    agentOptions: { detached: true },
+    storeReplay: config.storeReplay,
+    out: config.out,
+    statefulReplay: config.statefulReplay === false ? false : true,
+    storeErrorLogs: false,
+    loggingLevel: Logger.LEVEL.ERROR,
+    width: config.width,
+    height: config.height,
+    seed: config.seed,
+    debugAnnotations: config.debugAnnotations || false,
+    mapType: config.mapType || GameMap.Types.RANDOM,
+    parameters: {
+      MAX_DAYS: GAME_CONSTANTS.PARAMETERS.MAX_DAYS //json.config.episodeSteps,
+    },
+  }
+
+  const match = await myDimension.createMatch(
+    [
+      {
+        file: 'blank',
+        name: 'team-0',
+      },
+      {
+        file: 'blank',
+        name: 'team-1',
+      },
+    ],
+    configs
+  )
+
+  return match
 }
 
 export function reset(match: Match, state: GameState | SerializedState): Game {

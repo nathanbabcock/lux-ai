@@ -5,7 +5,7 @@ import { City } from '../lux/City'
 import { GameMap } from '../lux/GameMap'
 import Convert from './Convert'
 import DUMMY_GAMESTATE from './dummy-gamestate.json'
-import { initMatch } from './TreeSearch'
+import { initMatch } from './Sim'
 import { clone } from './util'
 
 describe('JSON => GameState (class-transformer)', () => {

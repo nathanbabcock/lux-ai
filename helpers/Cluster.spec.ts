@@ -2,8 +2,7 @@ import { GameMap, LuxMatchState } from '@lux-ai/2021-challenge'
 import { annotate } from '../lux/Agent'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import Convert from './Convert'
-import { simulate } from './Sim'
-import { initMatch } from './TreeSearch'
+import { initMatch, simulate } from './Sim'
 import Turn from './Turn'
 
 describe('Clusters', () => {

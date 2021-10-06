@@ -3,8 +3,7 @@ import { Cell } from '../lux/Cell'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import Convert from './Convert'
-import { reset, simulate } from './Sim'
-import { initMatch } from './TreeSearch'
+import { initMatch, reset, simulate } from './Sim'
 import Turn from './Turn'
 
 describe('Sim', () => {
@@ -165,6 +164,13 @@ describe('Sim', () => {
 
     const cities = Array.from(turn.player.cities.values())
     expect(cities.length).toBe(2)
+
+    game.replay.writeOut(match.results)
+  })
+
+  test('Simulate building city at location', async () => {
+    const { match, turn, game } = await initSeed('replays/test-simulate-building-city-at-location.json')
+
 
     game.replay.writeOut(match.results)
   })
