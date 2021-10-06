@@ -1,11 +1,11 @@
-import { LuxDesignLogic, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
+import { SerializedState } from '@lux-ai/2021-challenge'
 import { plainToClass } from 'class-transformer'
 import { GameState } from '../lux/Agent'
 import { City } from '../lux/City'
 import { GameMap } from '../lux/GameMap'
 import Convert from './Convert'
 import DUMMY_GAMESTATE from './dummy-gamestate.json'
-import { initMatch } from './Sim'
+import Sim from './Sim'
 import { clone } from './util'
 
 describe('JSON => GameState (class-transformer)', () => {
@@ -80,12 +80,13 @@ describe('GameState => SerializedState', () => {
 
 describe('SerializedState => Game (Lux AI internal)', () => {
   const initialize = async () => {
-    const match = await initMatch()
+    const sim = new Sim()
+    await sim.init()
     const gameState = plainToClass(GameState, DUMMY_GAMESTATE)
     const serializedState: SerializedState = Convert.toSerializedState(gameState)
-    LuxDesignLogic.reset(match, serializedState)
-    const game = (match.state as LuxMatchState).game
-    return { match, gameState, serializedState, game }
+    sim.reset(serializedState)
+    const game = sim.getGame()
+    return { gameState, serializedState, game }
   }
 
   test('Turn', async () => {
@@ -122,14 +123,15 @@ describe('SerializedState => Game (Lux AI internal)', () => {
 
 describe('Game => GameState (round trip)', () => {
   const initialize = async () => {
-    const match = await initMatch()
+    const sim = new Sim()
+    await sim.init()
     const originalGameState = plainToClass(GameState, DUMMY_GAMESTATE)
     const serializedState: SerializedState = Convert.toSerializedState(originalGameState)
-    LuxDesignLogic.reset(match, serializedState)
-    const game = (match.state as LuxMatchState).game
+    sim.reset(serializedState)
+    const game = sim.getGame()
     const finalGameState = clone(originalGameState)
     Convert.updateGameState(finalGameState, game)
-    return { match, originalGameState, serializedState, game, finalGameState }
+    return { originalGameState, serializedState, game, finalGameState }
   }
 
   test('Turn', async () => {

@@ -1,14 +1,14 @@
-import { GameMap, LuxMatchState } from '@lux-ai/2021-challenge'
+import { GameMap } from '@lux-ai/2021-challenge'
 import { Cell } from '../lux/Cell'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import Convert from './Convert'
-import { initMatch, reset, simulate } from './Sim'
-import Turn from './Turn'
+import Sim from './Sim'
 
-describe('Sim', () => {
+describe('Turn', () => {
   const initDebug = async (replay?: string) => {
-    const match = await initMatch({
+    const sim = new Sim()
+    await sim.init({
       storeReplay: !!replay,
       out: replay,
       debugAnnotations: true,
@@ -16,15 +16,12 @@ describe('Sim', () => {
       height: 16,
       mapType: GameMap.Types.DEBUG,
     })
-    const game = (match.state as LuxMatchState).game
-    const gameState = Convert.toGameState(game, 0)
-    const turn = new Turn(gameState)
-
-    return { match, gameState, turn, game }
+    return sim
   }
 
   const initSeed = async (replay?: string) => {
-    const match = await initMatch({
+    const sim = new Sim()
+    await sim.init({
       storeReplay: !!replay,
       out: replay,
       debugAnnotations: true,
@@ -33,22 +30,20 @@ describe('Sim', () => {
       height: 12,
       seed: 123456789,
     })
-    const game = (match.state as LuxMatchState).game
-    const gameState = Convert.toGameState(game, 0)
-    const turn = new Turn(gameState)
-
-    return { match, gameState, turn, game }
+    return sim
   }
 
   test('Initializes a Turn object', async () => {
-    const { turn } = await initDebug()
+    const sim = await initDebug()
+    const turn = sim.getTurn()
 
     expect(turn.resourceTiles.length).toBeGreaterThan(0)
     expect(turn.resourceTiles[0]).toBeInstanceOf(Cell)
   })
 
   test('Resets gamestate with manual state setting', async () => {
-    const { match, turn } = await initDebug()
+    const sim = await initDebug()
+    const turn = sim.getTurn()
 
     const unit = turn.gameState.players[turn.gameState.id].units[0]
     unit.pos = new Position(5, 10)
@@ -57,7 +52,7 @@ describe('Sim', () => {
     expect(serializedState.teamStates[0].units['u_1'].x).toBe(5)
     expect(serializedState.teamStates[0].units['u_1'].y).toBe(10)
 
-    let game = reset(match, turn.gameState)
+    const { game } = sim.reset(turn.gameState)
 
     expect(game.getUnit(0, 'u_1').pos.equals(new Position(5, 10))).toBe(true)
 
@@ -70,21 +65,23 @@ describe('Sim', () => {
   })
 
   test('Move a unit in a direction', async () => {
-    const { match, turn } = await initDebug('replays/test-move-in-direction.json')
+    const sim = await initDebug('replays/test-move-in-direction.json')
+    const turn = sim.getTurn()
 
     const unit = turn.player.units[0]
     const oldPos = unit.pos
     const action = turn.moveUnit(unit, GAME_CONSTANTS.DIRECTIONS.NORTH)
-    const game = await simulate(match, turn.gameState.id, action)
+    const { game } = await sim.action(action)
     const newPos = game.getUnit(unit.team, unit.id).pos
 
     expect(newPos.y).toBe(oldPos.y - 1) // North is negative y (?)
 
-    game.replay.writeOut(match.results)
+    sim.saveReplay()
   })
 
-  test('Move to cell', async () => {
-    const { match, turn, game } = await initDebug('replays/test-move-to-cell.json')
+  test('Move a unit to position', async () => {
+    const sim = await initDebug('replays/test-move-to-position.json')
+    const turn = sim.getTurn()
 
     const dest = new Position(4, 1)
 
@@ -92,7 +89,7 @@ describe('Sim', () => {
       for (let i = 0; i < steps; i++) {
         let unit = turn.player.units[0]
         let action = turn.moveTo(unit, dest)
-        let game = await simulate(match, turn.gameState.id, action)
+        let { game } = await sim.action(action)
         turn.update(game)
       }
     }
@@ -106,11 +103,12 @@ describe('Sim', () => {
 
     expect(unit.pos.equals(dest)).toBe(true)
 
-    game.replay.writeOut(match.results)
+    sim.saveReplay()
   })
 
   test('Move to cell', async () => {
-    const { match, turn, game } = await initDebug('replays/test-move-to-cell.json')
+    const sim = await initDebug('replays/test-move-to-cell.json')
+    const turn = sim.getTurn()
 
     const dest = new Position(4, 1)
 
@@ -118,7 +116,7 @@ describe('Sim', () => {
       for (let i = 0; i < steps; i++) {
         let unit = turn.player.units[0]
         let action = turn.moveTo(unit, dest)
-        let game = await simulate(match, turn.gameState.id, action)
+        let { game } = await sim.action(action)
         turn.update(game)
       }
     }
@@ -132,16 +130,17 @@ describe('Sim', () => {
 
     expect(unit.pos.equals(dest)).toBe(true)
 
-    game.replay.writeOut(match.results)
+    sim.saveReplay()
   })
 
   test('Gather closest resource', async () => {
-    const { match, turn, game } = await initSeed('replays/test-gather-closest-resource.json')
+    const sim = await initSeed('replays/test-gather-closest-resource.json')
+    const turn = sim.getTurn()
 
     for (let i = 0; i < 10; i++) {
       let unit = turn.player.units[0]
       let action = turn.gatherClosestResource(unit)
-      let game = await simulate(match, turn.gameState.id, action)
+      let { game } = await sim.action(action)
       turn.update(game)
     }
 
@@ -149,29 +148,27 @@ describe('Sim', () => {
     expect(unit.cargo.wood).toBe(100)
     expect(unit.getCargoSpaceLeft()).toBe(0)
 
-    game.replay.writeOut(match.results)
+    sim.saveReplay()
   })
 
   test('Build city at location', async () => {
-    const { match, turn, game } = await initSeed('replays/test-build-city-at-location.json')
+    const sim = await initSeed('replays/test-build-city-at-location.json')
+    const turn = sim.getTurn()
 
     for (let i = 0; i < 16; i++) {
       let unit = turn.player.units[0]
       let action = turn.buildCity(unit, new Position(8, 5))
-      let game = await simulate(match, turn.gameState.id, action)
+      let { game } = await sim.action(action)
       turn.update(game)
     }
 
     const cities = Array.from(turn.player.cities.values())
     expect(cities.length).toBe(2)
 
-    game.replay.writeOut(match.results)
+    sim.saveReplay()
   })
 
   test('Simulate building city at location', async () => {
-    const { match, turn, game } = await initSeed('replays/test-simulate-building-city-at-location.json')
-
-
-    game.replay.writeOut(match.results)
+    // TODO
   })
 })
