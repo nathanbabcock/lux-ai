@@ -186,10 +186,27 @@ export default class Turn {
     return actions
   }
 
+  buildClosestCity(unit: Unit): string {
+    const closestEmptyTile = this.director.getClosestCityPos(this.gameState.map, unit.pos)
+    if (!closestEmptyTile) {
+      log('no empty tile found')
+      return
+    }
+    this.director.cityPlans.push(closestEmptyTile.pos)
+  
+    if (unit.pos.distanceTo(closestEmptyTile.pos) === 0) {
+      return unit.buildCity()
+    } else {
+      const dir = unit.pos.directionTo(closestEmptyTile.pos)
+      return this.moveWithCollisionAvoidance(unit, dir)
+    }
+  }
+
   async settlerTreeSearch(
     sim: Sim,
     assignments: Assignments = {},
-    endTurn: number = -1
+    endTurn: number = -1,
+    depth: number = 0,
   ): Promise<Array<string>> {
     const SIM_DURATION = 20
     const actions = this.actions
@@ -211,12 +228,19 @@ export default class Turn {
       if (assignment && this.gameMap.getCellByPos(assignment).citytile) {
         delete assignments[unit.id]
       } else if (assignment) {
+        actions.push(annotate.circle(assignment.x, assignment.y))
         actions.push(this.buildCity(unit, assignment))
         continue
       }
-  
+
       // no assignment -- let's initiate a search tree to find one!
-  
+      if (depth === 3) {
+        log(`Tree search already went to max depth = ${depth}; building closest city`)
+        this.sidetext(`Depth limit - No valid assignments found for unit ${unit.id}; building closest city instead`)
+        actions.push(this.buildClosestCity(unit))
+        continue
+      }
+
       let bestScore = -1
       let bestAssignments: Assignments | null = null
       for (let i = 0; i < this.clusters.length; i++) {
@@ -230,7 +254,6 @@ export default class Turn {
         }
   
         actions.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
-        actions.push(annotate.circle(citySite.pos.x, citySite.pos.y))
         actions.push(annotate.text(citySite.pos.x, citySite.pos.y, `#${i}`))
   
         await tryAsync(async () => {
@@ -242,6 +265,7 @@ export default class Turn {
             sim,
             this.gameState,
             endTurn,
+            depth + 1,
           )
 
           this.sidetext(`Cluster ${i} has score ${simResults.gameStateValue}`)
@@ -255,27 +279,30 @@ export default class Turn {
           if (simResults.gameStateValue > bestScore || tieBreaker) {
             bestScore = simResults.gameStateValue
             bestAssignments = simResults.assignments
+            // this.sidetext('new best assgnmnt involving units: ', Object.keys(bestAssignments).join(' '))
           }
         })
       }
 
       // This repeats the block from before the FOR loop -- TODO DRY?
       if (!bestAssignments) {
-        log(`No valid assignments found for unit ${unit.id}`)
-        return actions
+        this.sidetext(`No valid assignments`)
+        actions.push(this.buildClosestCity(unit))
+        continue
       }
       assignment = bestAssignments[unit.id]
   
       if (assignment) {
         actions.push(this.buildCity(unit, assignment))
+        actions.push(annotate.circle(assignment.x, assignment.y))
         continue
       } else {
-        log(`No valid assignments found for unit ${unit.id}`)
+        this.sidetext(`Assignments existed, but none for unit ${unit.id}; building closest city instead`)
+        actions.push(this.buildClosestCity(unit))
+        continue
       }
     }
-
-
-  
+    
     return actions
   }
 }

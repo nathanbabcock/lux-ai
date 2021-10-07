@@ -8,6 +8,7 @@ import { Position } from '../lux/Position'
 import Convert from './Convert'
 import { log } from './logging'
 import Turn from './Turn'
+import { clone } from './util'
 
 export type SimState = {
   game: Game
@@ -152,26 +153,41 @@ export default class Sim {
     sim: Sim,
     gameState: GameState,
     endTurn: number,
+    depth: number,
   ): Promise<MissionSimulationV2> {
-
+    const simAssignments = clone(assignments)
+    
     this.reset(Convert.toSerializedState(gameState))
 
     const turns = endTurn - gameState.turn
-    log(`Starting simulation with ${turns} turns remaining`)
-    log(`Starting assignments:`)
-    for(const ass in assignments) log(ass, assignments[ass].x, assignments[ass].y)
+
+    if (turns <= 0) {
+      log(`Simulation bottomed out / base case reached`)
+      return {
+        assignments: simAssignments,
+        gameState,
+        gameStateValue: this.getGameStateValue(gameState),
+      }
+    }
+
+    log(`Starting simulation at depth ${depth} with ${turns} turns remaining`)
+    log(`Starting simAssignments:`)
+    for(const ass in simAssignments) log(ass, simAssignments[ass].x, simAssignments[ass].y)
     for (let i = 0; i < turns; i++) {
       const turn = this.getTurn()
-      const action = await turn.settlerTreeSearch(sim, assignments, endTurn)
+      const action = await turn.settlerTreeSearch(sim, simAssignments, endTurn, depth)
       await this.action(action)
     }
 
     const newGameState = this.getGameState()
+    const gameStateValue = this.getGameStateValue(newGameState)
+
+    log(`Completed sim with gamestate value ${gameStateValue}`)
 
     return {
       assignments,
       gameState: newGameState,
-      gameStateValue: this.getGameStateValue(newGameState),
+      gameStateValue,
     }
   }
 }

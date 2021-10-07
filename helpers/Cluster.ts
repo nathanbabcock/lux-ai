@@ -56,6 +56,8 @@ export default class Cluster {
       }
     })
 
+    bestCells = bestCells.filter(cell => !cell.citytile)
+
     if (bestCells.length === 0) return null
     const mapCenter = getMapCenter(gameMap)
     bestCells.sort((a, b) => a.pos.distanceTo(mapCenter) - b.pos.distanceTo(mapCenter))
