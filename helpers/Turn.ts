@@ -1,4 +1,5 @@
 import { Game } from '@lux-ai/2021-challenge'
+import { turn } from '../agents/tree-search'
 import { annotate, GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { GameMap } from '../lux/GameMap'
@@ -10,6 +11,9 @@ import Cluster, { getClusters } from './Cluster'
 import Convert from './Convert'
 import Director from './Director'
 import { getPerpendicularDirections, getResourceAdjacency, getResources } from './helpers'
+import { log, tryAsync } from './logging'
+import Sim, { Assignments } from './Sim'
+import { clone } from './util'
 
 export default class Turn {
   gameState: GameState
@@ -32,7 +36,7 @@ export default class Turn {
   }
 
   sidetext(...messages: any[]) {
-    this.actions.push(annotate.sidetext(`${messages.join(' ')}\n`))
+    this.actions.push(annotate.sidetext(`${messages.join(' ')}`))
   }
 
   /** Reinitialize existing Turn object from given GameState */
@@ -113,6 +117,7 @@ export default class Turn {
   }
 
   gatherClosestResource(unit: Unit): string {
+    if (!unit.canAct()) return this.idle(unit)
     let closestResourceTile = this.director.getClosestResourceTile(this.resourceTiles, this.player, unit)
     if (closestResourceTile === null) closestResourceTile = this.getClosestResourceTile(unit)
     if (closestResourceTile === null) return
@@ -164,5 +169,113 @@ export default class Turn {
 
   countCities(): number {
     return Array.from(this.player.cities.entries()).length
+  }
+
+  /** Automatically build workers & research every turn */
+  autoCities(): string[] {
+    const actions = []
+    this.player.cities.forEach((city) => {
+      city.citytiles.forEach((citytile) => {
+        if (citytile.cooldown >= 1) return
+        if (this.player.units.length < this.player.cityTileCount)
+          actions.push(citytile.buildWorker())
+        else
+          actions.push(citytile.research())
+      })
+    })
+    return actions
+  }
+
+  async settlerTreeSearch(
+    sim: Sim,
+    assignments: Assignments = {},
+    endTurn: number = -1
+  ): Promise<Array<string>> {
+    const SIM_DURATION = 20
+    const actions = this.actions
+  
+    actions.push(...this.autoCities())
+
+    for (const unit of this.player.units) {
+      if (!unit.canAct()) {
+        actions.push(this.idle(unit))
+        continue
+      }
+  
+      if (unit.getCargoSpaceLeft() > 0) {
+        actions.push(this.gatherClosestResource(unit))
+        continue
+      }
+  
+      let assignment = assignments[unit.id]
+      if (assignment && this.gameMap.getCellByPos(assignment).citytile) {
+        delete assignments[unit.id]
+      } else if (assignment) {
+        actions.push(this.buildCity(unit, assignment))
+        continue
+      }
+  
+      // no assignment -- let's initiate a search tree to find one!
+  
+      let bestScore = -1
+      let bestAssignments: Assignments | null = null
+      for (let i = 0; i < this.clusters.length; i++) {
+        const cluster = this.clusters[i]
+        log(`Simulating mission to cluster ${i} ===`)
+  
+        const citySite = cluster.getCitySite(this.gameMap)
+        if (!citySite) {
+          log(`No valid city site for cluster ${i}`)
+          return
+        }
+  
+        actions.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
+        actions.push(annotate.circle(citySite.pos.x, citySite.pos.y))
+        actions.push(annotate.text(citySite.pos.x, citySite.pos.y, `#${i}`))
+  
+        await tryAsync(async () => {
+          const simAssignments = clone(assignments)
+          simAssignments[unit.id] = citySite.pos
+          if (endTurn === -1) endTurn = this.gameState.turn + SIM_DURATION
+          const simResults = await sim.assignments(
+            simAssignments,
+            sim,
+            this.gameState,
+            endTurn,
+          )
+
+          this.sidetext(`Cluster ${i} has score ${simResults.gameStateValue}`)
+
+          const tieBreaker = simResults.gameStateValue === bestScore
+            && bestAssignments[unit.id]
+            && simResults.assignments[unit.id]
+            && simResults.assignments[unit.id].distanceTo(unit.pos)
+              < bestAssignments[unit.id].distanceTo(unit.pos)
+
+          if (simResults.gameStateValue > bestScore || tieBreaker) {
+            bestScore = simResults.gameStateValue
+            bestAssignments = simResults.assignments
+          }
+        })
+      }
+
+      // This repeats the block from before the FOR loop -- TODO DRY?
+      if (!bestAssignments) {
+        log(`No valid assignments found for unit ${unit.id}`)
+        return actions
+      }
+      assignment = bestAssignments[unit.id]
+  
+      if (assignment) {
+        actions.push(this.buildCity(unit, assignment))
+        continue
+      } else {
+        log(`No valid assignments found for unit ${unit.id}`)
+      }
+    }
+
+
+  
+    return actions
   }
 }

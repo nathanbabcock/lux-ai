@@ -1,15 +1,12 @@
 import { Game, GameMap, LuxDesign, LuxDesignLogic, LuxMatchConfigs, LuxMatchState, SerializedState } from '@lux-ai/2021-challenge'
 import { create, Logger, Match, MatchEngine } from 'dimensions-ai'
+import { Dimension } from 'dimensions-ai/lib/main/Dimension'
 import { DeepPartial } from 'dimensions-ai/lib/main/utils/DeepPartial'
-import { turn } from '../agents/tree-search'
-import { annotate, GameState } from '../lux/Agent'
+import { GameState } from '../lux/Agent'
+import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
-import { Unit } from '../lux/Unit'
 import Convert from './Convert'
 import { log } from './logging'
-import { clone } from './util'
-import GAME_CONSTANTS from '../lux/game_constants.json'
-import { Dimension } from 'dimensions-ai/lib/main/Dimension'
 import Turn from './Turn'
 
 export type SimState = {
@@ -136,46 +133,45 @@ export default class Sim {
     game.replay.writeOut(this.match.results)
   }
 
-  async settler(
-    unit: Unit,
-    destination: Position,
-    gameState: GameState
-  ): Promise<MissionSimulation> {
-    const SIM_DURATION = 360
-    let outcome = false
-    const turnActions: string[] = []
-    const annotations: string[] = [
-      annotate.line(unit.pos.x, unit.pos.y, destination.x, destination.y)
-    ]
+  getGameStateValue(gamestate: GameState | null = null) {
+    if (!gamestate) gamestate = this.getGameState()
+
+    const player = gamestate.players[gamestate.id]
+
+    const cityTiles =
+      Array.from(player.cities.values())
+      .map(city => city.citytiles).flat().length
+
+    const units = player.units.length
+
+    return Math.max(cityTiles, units)
+  }
+
+  async assignments(
+    assignments: Assignments,
+    sim: Sim,
+    gameState: GameState,
+    endTurn: number,
+  ): Promise<MissionSimulationV2> {
 
     this.reset(Convert.toSerializedState(gameState))
 
-    for (let i = 0; i < SIM_DURATION; i++) {
+    const turns = endTurn - gameState.turn
+    log(`Starting simulation with ${turns} turns remaining`)
+    log(`Starting assignments:`)
+    for(const ass in assignments) log(ass, assignments[ass].x, assignments[ass].y)
+    for (let i = 0; i < turns; i++) {
       const turn = this.getTurn()
-      const action = turn.buildCity(turn.player.units[0], destination)
-      turnActions.push(action)
+      const action = await turn.settlerTreeSearch(sim, assignments, endTurn)
       await this.action(action)
-      let newUnit = this.getTurn().player.units[0]
-      if (!newUnit) break
-      const cityTile = this.getGameState().map.getCellByPos(destination).citytile
-      if (cityTile && cityTile.team === unit.team) {
-        // team built city
-        outcome = true
-        break
-      } else if (cityTile && cityTile.team !== unit.team) {
-        // enemy built city
-        break
-      }
-
-      annotations.push(annotate.circle(newUnit.pos.x, newUnit.pos.y))
-      annotations.push(annotate.text(newUnit.pos.x, newUnit.pos.y, `#${i}`))
     }
 
+    const newGameState = this.getGameState()
+
     return {
-      plan: turnActions,
-      annotations,
-      gameState: this.getGameState(),
-      outcome,
+      assignments,
+      gameState: newGameState,
+      gameStateValue: this.getGameStateValue(newGameState),
     }
   }
 }
@@ -185,4 +181,12 @@ export type MissionSimulation = {
   plan: string[]
   annotations: string[]
   outcome: boolean
+}
+
+export type Assignments = Record<string, Position>
+
+export type MissionSimulationV2 = {
+  assignments: Assignments
+  gameState: GameState,
+  gameStateValue?: number,
 }
