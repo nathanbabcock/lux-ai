@@ -234,7 +234,7 @@ export default class Turn {
       }
 
       // no assignment -- let's initiate a search tree to find one!
-      if (depth === 3) {
+      if (depth === 2) {
         log(`Tree search already went to max depth = ${depth}; building closest city`)
         this.sidetext(`Depth limit - No valid assignments found for unit ${unit.id}; building closest city instead`)
         actions.push(this.buildClosestCity(unit))

@@ -15,9 +15,12 @@ async function main() {
 
   sim = await Sim.create()
   agent.run(async gameState => {
+    sim.resetStats()
     const turn = new Turn(gameState)
     log(`=== Turn #${gameState.turn} ===`)
-    return await turn.settlerTreeSearch(sim)
+    const actions = await turn.settlerTreeSearch(sim)
+    log(`Sim stats: turns=${sim.stats.turns}, resets=${sim.stats.resets}`)
+    return actions
   })
 }
 

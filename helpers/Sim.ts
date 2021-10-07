@@ -20,6 +20,11 @@ export default class Sim {
   public match?: Match
   public playerID?: number
 
+  public stats = {
+    turns: 0,
+    resets: 0,
+  }
+
   private design?: LuxDesign
   private dimension?: Dimension
   private configs: DeepPartial<LuxMatchConfigs & Match.Configs>
@@ -106,6 +111,7 @@ export default class Sim {
     LuxDesignLogic.reset(this.match, state)
     let game = this.getGame()
     game.replay.data.stateful = [game.toStateObject()]
+    this.stats.resets++
     return this.getSimState()
   }
 
@@ -117,6 +123,7 @@ export default class Sim {
       agentID: this.playerID,
     }))
     await LuxDesignLogic.update(this.match, commands)
+    this.stats.turns++
     return this.getSimState()
   }
 
@@ -188,6 +195,13 @@ export default class Sim {
       assignments,
       gameState: newGameState,
       gameStateValue,
+    }
+  }
+
+  resetStats() {
+    this.stats = {
+      turns: 0,
+      resets: 0,
     }
   }
 }
