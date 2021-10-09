@@ -24,7 +24,7 @@ describe('Turn', () => {
     expect(serializedState.teamStates[0].units['u_1'].x).toBe(5)
     expect(serializedState.teamStates[0].units['u_1'].y).toBe(10)
 
-    const { game } = sim.reset(turn.gameState)
+    const { game } = sim.reset(serializedState)
 
     expect(game.getUnit(0, 'u_1').pos.equals(new Position(5, 10))).toBe(true)
 

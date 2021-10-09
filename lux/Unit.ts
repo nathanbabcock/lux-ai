@@ -1,7 +1,8 @@
-import GAME_CONSTANTS from "./game_constants.json";
-import {Position} from "./Position";
-import {GameMap} from "./GameMap";
 import { Type } from 'class-transformer';
+import 'reflect-metadata';
+import { GameMap } from "./GameMap";
+import GAME_CONSTANTS from "./game_constants.json";
+import { Position } from "./Position";
 
 export interface Cargo {
   wood: number;
