@@ -32,4 +32,16 @@ describe('Pathfinding', () => {
 
     expect(path).toBeNull()
   })
+
+  test('Core A* navigates around an obstacle', async () => {
+    const { unit, gameState } = init()
+    const obstacle = new Unit(1, GAME_CONSTANTS.UNIT_TYPES.WORKER, 'u_1', 0, 2, 0, 0, 0, 0)
+    gameState.players[1].units.push(obstacle)
+    const goal = new Position(0, 5)
+    const path = Pathfinding.astar(unit.pos, goal, gameState)
+
+    expect(path).not.toBeNull()
+
+    console.log(path.map(p => `(${p.x}, ${p.y})`).join('\n'))
+  })
 })
