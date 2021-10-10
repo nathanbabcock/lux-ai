@@ -1,6 +1,10 @@
 import { GameState } from '../lux/Agent'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
+import Convert from './Convert'
+import { PositionMap } from './PositionMap'
+import Sim from './Sim'
+import { deepClone } from './util'
 
 export type PathNode = {
   pos: Position
@@ -12,13 +16,36 @@ export type PathNode = {
   turn?: number // ??
 }
 
+export type SimPathNode = {
+  pos: Position
+  canAct: boolean
+  turn: number
+
+  /** How we arrived at this node */
+  cameFrom?: SimPathNode
+
+  /**
+   * The action taken to arrive at this node
+   * (technically, it could be interpolated by analyzing cameFrom,
+   * but that may change with future action types)
+   */
+  action?: string
+}
+
 export default class Pathfinding {
-  static reconstruct_path(cameFrom: Map<Position, Position>, current: Position) {
+  static reconstruct_path(cameFrom: Map<Position, Position>, current: Position): Position[] {
     const total_path = [current]
     while (cameFrom.has(current)) {
       current = cameFrom.get(current)
       total_path.unshift(current)
     }
+    return total_path
+  }
+
+  static reconstruct_path_sim(current: SimPathNode): SimPathNode[] {
+    const total_path = [current]
+    while (current.cameFrom)
+      total_path.unshift(current = current.cameFrom)
     return total_path
   }
 
@@ -53,7 +80,106 @@ export default class Pathfinding {
 
     return neighbors
   }
-  
+
+  static async astar_sim(startUnit: Unit, goal: Position, startGameState: GameState, sim: Sim): Promise<SimPathNode[] | null> {
+    const start = startUnit.pos
+
+    /** @todo this heuristic should become TURNS until destination, rather than solely distance */
+    const h = (start: Position, end: Position) => Pathfinding.manhattan(start, end)
+
+    const openSet: SimPathNode[] = [{
+      pos: start,
+      canAct: startUnit.canAct(),
+      turn: startGameState.turn
+    }]
+
+    const gScore = new PositionMap()
+    gScore.set(start, 0)
+
+    const fScore = new PositionMap()
+    fScore.set(start, h(start, goal))
+
+    while (openSet.length > 0) {
+      let cur: SimPathNode = openSet[0]
+      openSet.forEach(node => {
+        if (fScore.get(node.pos) < fScore.get(cur.pos)) cur = node
+      })
+
+      if (cur.pos.equals(goal))
+        return Pathfinding.reconstruct_path_sim(cur)
+
+      openSet.splice(openSet.indexOf(cur), 1)
+      const curGameState = deepClone(GameState, startGameState)
+      const curUnit = curGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+      curGameState.turn = cur.turn
+      curUnit.pos.x = cur.pos.x
+      curUnit.pos.y = cur.pos.y
+      if (cur.canAct) curUnit.cooldown = 0
+
+      if (!cur.canAct) {
+        const action = curUnit.move('c')
+        
+        // Simulate the waiting move
+        const serializedState = Convert.toSerializedState(curGameState)
+        sim.reset(serializedState)
+        const simState = await sim.action(action)
+        const newGameState = simState.gameState
+        const newUnit = newGameState.players[startUnit.team].units.find(u => u.id === startUnit.id)
+
+        const waitingNode: SimPathNode = {
+          pos: newUnit.pos,
+          canAct: newUnit.canAct(),
+          turn: newGameState.turn,
+          cameFrom: cur,
+          action: action,
+        }
+        
+        openSet.push(waitingNode)
+        continue // instead of bailing out of this iteration, can we just proceed?
+      }
+
+      const directions = ['n', 'e', 's', 'w']
+      for (const dir of directions) {
+        // Simulate the directional move
+        const action = startUnit.move(dir)
+        const serializedState = Convert.toSerializedState(curGameState)
+        sim.reset(serializedState)
+        let simState
+        simState = await sim.action(action)
+        const newGameState = simState.gameState
+        const newUnit = newGameState.players[startUnit.team].units.find(u => u.id === startUnit.id)
+
+        if (!newUnit) {
+          //console.warn(`Unit used for pathfinding has disappeared on turn ${curGameState.turn}, presumed DEAD`)
+          continue
+        }
+
+        if (newUnit.pos.equals(curUnit.pos)) {
+          //console.warn(`Attempted move failed -- skipping to next node`)
+          continue
+        }
+
+        const neighbor: SimPathNode = {
+          pos: newUnit.pos,
+          canAct: newUnit.canAct(),
+          turn: newGameState.turn,
+          cameFrom: cur,
+          action,
+        }
+
+        const tentative_gScore = gScore.get(cur.pos) + h(cur.pos, neighbor.pos)
+        if (tentative_gScore < gScore.get(neighbor.pos) || !gScore.has(neighbor.pos)) {
+          gScore.set(neighbor.pos, tentative_gScore)
+          fScore.set(neighbor.pos, tentative_gScore + h(neighbor.pos, goal))
+          if (!openSet.find(node => node.pos.equals(neighbor.pos) && node.canAct === neighbor.canAct))
+            openSet.push(neighbor)
+        }
+      }
+    }
+
+    return null
+  }
+
   static astar(start: Position, goal: Position, gameState: GameState): Position[] | null {
     const h = (start, goal) => Pathfinding.manhattan(start, goal)
 
@@ -77,8 +203,8 @@ export default class Pathfinding {
       openSet.splice(openSet.indexOf(cur), 1)
       const neighbors = Pathfinding.neighbors(cur, gameState)
       for (const neighbor of neighbors) {
-        const tentative_gScore = (gScore.get(cur) || Infinity) + h(cur, neighbor)
-        if (tentative_gScore < gScore.get(neighbor) || !gScore.has(neighbor)) {
+        const tentative_gScore = gScore.get(cur) + h(cur, neighbor)
+        if (!gScore.has(neighbor) || tentative_gScore < gScore.get(neighbor)) {
           cameFrom.set(neighbor, cur)
           gScore.set(neighbor, tentative_gScore)
           fScore.set(neighbor, gScore.get(neighbor) + h(neighbor, goal))

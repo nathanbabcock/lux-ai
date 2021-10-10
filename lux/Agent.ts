@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { classToPlain, plainToClass, Type } from 'class-transformer';
 import readline from "readline";
 import 'reflect-metadata';
 import { City } from "./City";

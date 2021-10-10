@@ -5,18 +5,28 @@ import { Player } from '../lux/Player'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Pathfinding from './Pathfinding'
+import Sim from './Sim'
 
-const init = () => {
+const initSim = async () => {
+  const sim = await Sim.create()
   const unit = new Unit(0, GAME_CONSTANTS.UNIT_TYPES.WORKER, 'u_0', 0, 0, 0, 0, 0, 0)
   const gameState = new GameState()
   gameState.map = new GameMap(10, 10)
   gameState.id = unit.team
   gameState.players = [new Player(0), new Player(1)]
-  return { unit, gameState }
+  gameState.players[0].units = [unit]
+  gameState.turn = 0
+  return { unit, gameState, sim }
 }
 
-const { unit, gameState } = init()
-const goal = new Position(5, 5)
-const path = Pathfinding.astar(unit.pos, goal, gameState)
+async function main() {
+  const { unit, gameState, sim } = await initSim()
+  const goal = new Position(5, 5)
 
-console.log(JSON.stringify(path.map(n => `${n.x}, ${n.y}`), null, 2))
+  const path = await Pathfinding.astar_sim(unit, goal, gameState, sim)
+
+  console.log(path)
+  // expect(path.length).toBe(Pathfinding.manhattan(unit.pos, goal) + 1)
+}
+
+main()
