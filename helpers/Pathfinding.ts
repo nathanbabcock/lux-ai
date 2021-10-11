@@ -2,7 +2,7 @@ import { GameState } from '../lux/Agent'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Convert from './Convert'
-import { UniqueMap } from './UniqueMap'
+import { PositionActionState, UniqueMap } from './UniqueMap'
 import Sim from './Sim'
 import { deepClone } from './util'
 
@@ -32,17 +32,33 @@ export type SimPathNode = {
   action?: string
 }
 
+/**
+ * @todo it's probably redundant to represent both a SimPathNode and a PositionActionState,
+ * as they both represent fundamentally the same thing on a graph */
+export type SimPathNodeV2 = {
+  state: PositionActionState
+  turn: number
+
+  /** How we arrived at this node */
+  cameFrom?: SimPathNodeV2
+
+  /**
+   * The action taken to arrive at this node
+   * (technically, it could be interpolated by analyzing cameFrom,
+   * but that may change with future action types)
+   */
+  action?: string
+}
+
 export default class Pathfinding {
-  static reconstruct_path(cameFrom: Map<Position, Position>, current: Position): Position[] {
+  static reconstruct_path_sim(current: SimPathNode): SimPathNode[] {
     const total_path = [current]
-    while (cameFrom.has(current)) {
-      current = cameFrom.get(current)
-      total_path.unshift(current)
-    }
+    while (current.cameFrom)
+      total_path.unshift(current = current.cameFrom)
     return total_path
   }
 
-  static reconstruct_path_sim(current: SimPathNode): SimPathNode[] {
+  static reconstruct_path_sim_v2(current: SimPathNodeV2): SimPathNodeV2[] {
     const total_path = [current]
     while (current.cameFrom)
       total_path.unshift(current = current.cameFrom)
@@ -51,6 +67,12 @@ export default class Pathfinding {
 
   static manhattan(pos: Position, goal: Position) {
     return Math.abs(pos.x - goal.x) + Math.abs(pos.y - goal.y)
+  }
+
+  static turns(startPos: Position, startCanAct: boolean, goalPos: Position, goalCanAct: boolean): number {
+    return (Pathfinding.manhattan(startPos, goalPos) * 2) // 1 turn of movement, 1 turn of cooldown, per tile
+      + (startCanAct ? 0 : 1) // 1 turn of initial cooldown if can't act
+      - (goalCanAct ? 0 : 1) // Whether to wait for cooldown on goal tile
   }
 
   static neighbors(node: Position, gameState: GameState) {
@@ -81,44 +103,42 @@ export default class Pathfinding {
     return neighbors
   }
 
-  static async astar_sim_turns(startUnit: Unit, goal: Position, startGameState: GameState, sim: Sim): Promise<SimPathNode[] | null> {
+  static async astar_sim_turns(startUnit: Unit, goal: Position, startGameState: GameState, sim: Sim): Promise<SimPathNodeV2[] | null> {
     const start = startUnit.pos
 
-    const h = (start: Position, end: Position) =>
-      Pathfinding.manhattan(start, end) * 2 // 1 turn of movement, 1 turn of cooldown, per tile
-      - 1 // no cooldown on last step
-      + (startUnit.canAct() ? 0 : 1) // 1 turn of initial cooldown if can't act
+    const h = Pathfinding.turns
 
-    const openSet: SimPathNode[] = [{
-      pos: start,
-      canAct: startUnit.canAct(),
+    const startState = new PositionActionState(start, startUnit.canAct())
+
+    const openSet: SimPathNodeV2[] = [{
+      state: startState,
       turn: startGameState.turn,
     }]
 
-    const gScore = new UniqueMap<Position>()
-    gScore.set(start, 0)
+    const gScore = new UniqueMap<PositionActionState>()
+    gScore.set(startState, 0)
 
-    const fScore = new UniqueMap<Position>()
-    fScore.set(start, h(start, goal))
+    const fScore = new UniqueMap<PositionActionState>()
+    fScore.set(startState, h(startUnit.pos, startUnit.canAct(), goal, false))
 
     while (openSet.length > 0) {
-      let cur: SimPathNode = openSet[0]
+      let cur: SimPathNodeV2 = openSet[0]
       openSet.forEach(node => {
-        if (fScore.get(node.pos) < fScore.get(cur.pos)) cur = node
+        if (fScore.get(node.state) < fScore.get(cur.state)) cur = node
       })
 
-      if (cur.pos.equals(goal))
-        return Pathfinding.reconstruct_path_sim(cur)
+      if (cur.state.pos.equals(goal))
+        return Pathfinding.reconstruct_path_sim_v2(cur)
 
       openSet.splice(openSet.indexOf(cur), 1)
       const curGameState = deepClone(GameState, startGameState)
       const curUnit = curGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
       curGameState.turn = cur.turn
-      curUnit.pos.x = cur.pos.x
-      curUnit.pos.y = cur.pos.y
-      if (cur.canAct) curUnit.cooldown = 0
+      curUnit.pos.x = cur.state.pos.x
+      curUnit.pos.y = cur.state.pos.y
+      if (cur.state.canAct) curUnit.cooldown = 0
 
-      if (!cur.canAct) {
+      if (!cur.state.canAct) {
         const action = curUnit.move('c')
         
         // Simulate the waiting move
@@ -128,14 +148,26 @@ export default class Pathfinding {
         const newGameState = simState.gameState
         const newUnit = newGameState.players[startUnit.team].units.find(u => u.id === startUnit.id)
 
-        const waitingNode: SimPathNode = {
-          pos: newUnit.pos,
-          canAct: newUnit.canAct(),
+        const waitingNode: SimPathNodeV2 = {
+          state: new PositionActionState(
+            newUnit.pos,
+            newUnit.canAct()
+          ),
           turn: newGameState.turn,
           cameFrom: cur,
           action: action,
         }
         
+        // TODO redundant with directions code
+        const tentative_gScore = gScore.get(cur.state) + h(cur.state.pos, cur.state.canAct, waitingNode.state.pos, waitingNode.state.canAct)
+        console.log(`gScore(${waitingNode.state.pos.x}, ${waitingNode.state.pos.y}, ${waitingNode.state.canAct}) = ${tentative_gScore}`)
+        if (tentative_gScore < gScore.get(waitingNode.state) || !gScore.has(waitingNode.state)) {
+          gScore.set(waitingNode.state, tentative_gScore)
+          fScore.set(waitingNode.state, tentative_gScore + h(newUnit.pos, newUnit.canAct(), goal, false))
+          if (!openSet.find(node => node.state.equals(waitingNode.state)))
+            openSet.push(waitingNode)
+        }
+
         openSet.push(waitingNode)
         continue // instead of bailing out of this iteration, can we just proceed?
       }
@@ -161,19 +193,22 @@ export default class Pathfinding {
           continue
         }
 
-        const neighbor: SimPathNode = {
-          pos: newUnit.pos,
-          canAct: newUnit.canAct(),
+        const neighbor: SimPathNodeV2 = {
+          state: new PositionActionState(
+            newUnit.pos,
+            newUnit.canAct(),
+          ),
           turn: newGameState.turn,
           cameFrom: cur,
           action,
         }
 
-        const tentative_gScore = gScore.get(cur.pos) + h(cur.pos, neighbor.pos)
-        if (tentative_gScore < gScore.get(neighbor.pos) || !gScore.has(neighbor.pos)) {
-          gScore.set(neighbor.pos, tentative_gScore)
-          fScore.set(neighbor.pos, tentative_gScore + h(neighbor.pos, goal))
-          if (!openSet.find(node => node.pos.equals(neighbor.pos) && node.canAct === neighbor.canAct))
+        const tentative_gScore = gScore.get(cur.state) + h(cur.state.pos, cur.state.canAct, neighbor.state.pos, neighbor.state.canAct)
+        console.log(`gScore(${neighbor.state.pos.x}, ${neighbor.state.pos.y}, ${neighbor.state.canAct}) = ${tentative_gScore}`)
+        if (tentative_gScore < gScore.get(neighbor.state) || !gScore.has(neighbor.state)) {
+          gScore.set(neighbor.state, tentative_gScore)
+          fScore.set(neighbor.state, tentative_gScore + h(newUnit.pos, newUnit.canAct(), goal, false))
+          if (!openSet.find(node => node.state.equals(neighbor.state)))
             openSet.push(neighbor)
         }
       }
@@ -281,6 +316,17 @@ export default class Pathfinding {
     return null
   }
 
+  /** @deprecated only used for older pathfinding implementations */
+  static reconstruct_path(cameFrom: Map<Position, Position>, current: Position): Position[] {
+    const total_path = [current]
+    while (cameFrom.has(current)) {
+      current = cameFrom.get(current)
+      total_path.unshift(current)
+    }
+    return total_path
+  }
+
+  /** @todo potentially incorrect gScores resulting in longer running times */
   static astar(start: Position, goal: Position, gameState: GameState): Position[] | null {
     const h = (start, goal) => Pathfinding.manhattan(start, goal)
 

@@ -23,7 +23,7 @@ async function main() {
   const { unit, gameState, sim } = await initSim()
   const goal = new Position(5, 5)
 
-  const path = await Pathfinding.astar_sim(unit, goal, gameState, sim)
+  const path = await Pathfinding.astar_sim_turns(unit, goal, gameState, sim)
 
   console.log(path)
   // expect(path.length).toBe(Pathfinding.manhattan(unit.pos, goal) + 1)

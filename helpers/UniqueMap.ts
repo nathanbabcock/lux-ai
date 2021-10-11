@@ -1,5 +1,21 @@
-export interface Equalable {
-  equals(other: Equalable): boolean
+import { Position } from '../lux/Position'
+
+export interface Equalable<T> {
+  equals(other: T): boolean
+}
+
+export class PositionActionState implements Equalable<PositionActionState> {
+  pos: Position
+  canAct: boolean
+
+  constructor(pos: Position, canAct: boolean) {
+    this.pos = pos
+    this.canAct = canAct
+  }
+
+  equals(other: PositionActionState): boolean {
+    return this.pos.equals(other.pos) && this.canAct === other.canAct
+  }
 }
 
 /** An array-backed mapping from unique {@link Position} representations
@@ -7,7 +23,7 @@ export interface Equalable {
  * @todo rather than a separate map, we could build a state-action graph
  * with immediate f and g scores
  */
- export class UniqueMap<T extends Equalable> {
+ export class UniqueMap<T extends Equalable<any>> {
   data: {
     key: T,
     value: number,

@@ -91,3 +91,36 @@ describe('Simulation-driven pathfinding', () => {
     // console.log(path.map(node => `(${node.pos.x}, ${node.pos.y}) => ${node.action}`).join('\n'))
   })
 })
+
+describe('Simulation-driven pathfinding w/ Turns heuristic', () => {
+  test('Finds a solution', async () => {
+    const { unit, gameState, sim } = await initSim()
+    const goal = new Position(5, 5)
+
+    const path = await Pathfinding.astar_sim_turns(unit, goal, gameState, sim)
+
+    expect(path).not.toBeNull()
+    expect(path.length).toBe(Pathfinding.manhattan(unit.pos, goal) * 2)
+  })
+
+  test('Returns null if path is impossible', async () => {
+    const { unit, gameState, sim } = await initSim()
+    const goal = new Position(-1, -1)
+
+    const path = await Pathfinding.astar_sim_turns(unit, goal, gameState, sim)
+
+    expect(path).toBeNull()
+  })
+
+  test('Navigates around an obstacle', async () => {
+    const { unit, gameState, sim } = await initSim()
+    const goal = new Position(0, 5)
+    const obstacle = new Unit(1, GAME_CONSTANTS.UNIT_TYPES.WORKER, 'u_1', 0, 2, 0, 0, 0, 0)
+    gameState.players[1].units.push(obstacle)
+
+    const path = await Pathfinding.astar_sim_turns(unit, goal, gameState, sim)
+
+    expect(path).not.toBeNull()
+    // console.log(path.map(node => `(${node.pos.x}, ${node.pos.y}) => ${node.action}`).join('\n'))
+  })
+})
