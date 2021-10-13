@@ -1,3 +1,4 @@
+import { GameState } from '../lux/Agent'
 import { Position } from '../lux/Position'
 
 /**
@@ -14,7 +15,7 @@ export class MovementState extends StateNode {
   constructor(
     public pos: Position,
     public canAct: boolean,
-    public turn: number = -1,
+    public gameState: GameState = undefined,
   ) { super() }
 
   equals(other: MovementState): boolean {

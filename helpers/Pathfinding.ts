@@ -5,6 +5,23 @@ import Convert from './Convert'
 import { MovementState, StateMap, StateNode } from './StateNode'
 import Sim from './Sim'
 import { deepClone } from './util'
+import { Cell } from '../lux/Cell'
+import GAME_CONSTANTS from '../lux/game_constants.json'
+
+export type MetaPathNode = {
+  pos: Position
+  estimatedDistance: number
+  actualDistance?: number
+  cargoFull?: boolean
+  path?: MovementState[]
+  detours?: Map<Cell, MetaPathNode>
+  parent?: MetaPathNode
+}
+
+export type PathfindingResult = {
+  path: MovementState[]
+  gameState: GameState
+}
 
 export default class Pathfinding {
   static reconstruct_path<T extends StateNode>(current: T): T[] {
@@ -24,12 +41,130 @@ export default class Pathfinding {
       - (goalCanAct ? 0 : 1) // Whether to wait for cooldown on goal tile
   }
 
-  static async astar_sim_turns(startUnit: Unit, goal: Position, startGameState: GameState, sim: Sim): Promise<MovementState[] | null> {
+  static async astar_build_city(startUnit: Unit, startGameState: GameState, sim: Sim): Promise<MovementState[] | null> {
+    const destinations = new Map<Cell, MetaPathNode>()
+    const map = startGameState.map
+    const player = startGameState.players[startUnit.team]
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const cell = map.getCell(x, y)
+        if (cell.resource && cell.resource.amount > 0) continue
+        if (cell.citytile) continue
+        destinations.set(cell, {
+          pos: cell.pos,
+          estimatedDistance: Pathfinding.turns(startUnit.pos, startUnit.canAct(), cell.pos, true),
+          actualDistance: undefined,
+          detours: new Map<Cell, MetaPathNode>(),
+        })
+      }
+    }
+
+    Array.from(destinations.values()).forEach(dest => {
+      for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+          const cell = map.getCell(x, y)
+          if (!cell.resource) continue
+          if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.COAL && !player.researchedCoal) continue
+          if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.URANIUM && !player.researchedUranium) continue
+          dest.detours.set(cell, {
+            pos: cell.pos,
+            parent: dest,
+            estimatedDistance: Pathfinding.turns(startUnit.pos, startUnit.canAct(), cell.pos, true)
+              + Pathfinding.turns(cell.pos, true, dest.pos, true),
+            actualDistance: undefined,
+          })
+        }
+      }
+    })
+
+    const getNextNodeToCheck = () => {
+      const uncheckedDestinations = Array.from(destinations.values())
+        .filter(dest => dest.actualDistance === undefined)
+        .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
+      const closestUncheckedDest = uncheckedDestinations.length === 0 ? undefined : uncheckedDestinations[0]
+      if (closestUncheckedDest)
+        console.log(`Closest empty pos: d(${closestUncheckedDest.pos.x}, ${closestUncheckedDest.pos.y})=${closestUncheckedDest.estimatedDistance}`)
+
+      const uncheckedDetours = Array.from(destinations.values())
+        .map(dest => Array.from(dest.detours.values())).flat()
+        .filter(detour => detour.actualDistance === undefined)
+        .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
+      const closestUncheckedDetour = uncheckedDetours.length === 0 ? undefined : uncheckedDetours[0]
+      console.log(`Closest detour: d((${closestUncheckedDetour.pos.x}, ${closestUncheckedDetour.pos.y}) => (${closestUncheckedDetour.parent.pos.x}, ${closestUncheckedDetour.parent.pos.y})) = ${closestUncheckedDetour.estimatedDistance}`)
+
+      if (!closestUncheckedDest && !closestUncheckedDetour)
+        return null
+      else if (!closestUncheckedDest || closestUncheckedDest.estimatedDistance > closestUncheckedDetour.estimatedDistance)
+        return closestUncheckedDetour
+      else
+        return closestUncheckedDest
+    }
+
+    let curBestSolution: null | MetaPathNode = null
+
+    let next: MetaPathNode
+    while (next = getNextNodeToCheck()) {
+      if (curBestSolution && next.estimatedDistance >= curBestSolution.actualDistance)
+        return curBestSolution.path
+    
+      console.log(`Next dest to check: ${next.pos.x}, ${next.pos.y}`)
+
+      let pathfindingResult: PathfindingResult
+      if (next.parent) {
+        const pathPart1 = await Pathfinding.astar_move(startUnit, curBestSolution.pos, startGameState, sim)
+        if (!pathPart1) {
+          next.actualDistance = Infinity
+          continue
+        }
+
+        const newGameState = pathPart1.gameState
+        const newUnit = newGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+        const pathPart2 = await Pathfinding.astar_move(newUnit, curBestSolution.parent.pos, newGameState, sim)
+
+        if (!pathPart2) {
+          next.actualDistance = Infinity
+          continue
+        }
+
+        next.path = [
+          ...pathPart1.path,
+          ...pathPart2.path,
+        ]
+        next.actualDistance = pathPart1.path.length + pathPart2.path.length
+
+        const endGameState = pathPart2.gameState
+        const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+        next.cargoFull = endUnit.getCargoSpaceLeft() === 0
+      } else {
+        console.log(`cargoSpaceLeft @ start = ${startUnit.getCargoSpaceLeft()}`)
+
+        pathfindingResult = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim)
+        next.path = pathfindingResult.path
+        next.actualDistance = pathfindingResult.path.length
+
+        const endGameState = pathfindingResult.gameState
+        const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+        next.cargoFull = endUnit.getCargoSpaceLeft() === 0
+
+        console.log(`cargoSpaceLeft @ end = ${endUnit.getCargoSpaceLeft()}, ${endUnit.pos.x}, ${endUnit.pos.y}`)
+      }
+
+      console.log(`Cargo full at ${next.pos.x}, ${next.pos.y} = ${next.cargoFull}`)
+
+      if (next.cargoFull && (!curBestSolution || next.actualDistance < curBestSolution.actualDistance))
+        curBestSolution = next
+    }
+
+    return curBestSolution ? curBestSolution.path : null
+  }
+
+  static async astar_move(startUnit: Unit, goal: Position, startGameState: GameState, sim: Sim): Promise<PathfindingResult | null> {
     /** Heuristic for *minimum* number of turns required to get from @param start state to @param goal state */
     const h = (start: MovementState, goal: MovementState) =>
       Pathfinding.turns(start.pos, start.canAct, goal.pos, goal.canAct)
     
     const startState = new MovementState(startUnit.pos, startUnit.canAct())
+    startState.gameState = startGameState
 
     const goalState = new MovementState(goal, false)
 
@@ -47,16 +182,18 @@ export default class Pathfinding {
         if (fScore.get(node) < fScore.get(cur)) cur = node
       })
 
-      if (cur.equals(goalState))
-        return Pathfinding.reconstruct_path(cur)
+      if (cur.equals(goalState)) {
+        return {
+          path: Pathfinding.reconstruct_path(cur),
+          gameState: cur.gameState,
+        }
+      }
 
       openSet.splice(openSet.indexOf(cur), 1)
-      const curGameState = deepClone(GameState, startGameState)
+      
+      const curGameState = cur.gameState
+      const curSerializedState = Convert.toSerializedState(curGameState)
       const curUnit = curGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
-      curGameState.turn = cur.turn
-      curUnit.pos.x = cur.pos.x
-      curUnit.pos.y = cur.pos.y
-      if (cur.canAct) curUnit.cooldown = 0
 
       const actions: string[] = []
       if (!cur.canAct)
@@ -67,8 +204,7 @@ export default class Pathfinding {
       }
 
       for (const action of actions) {
-        const serializedState = Convert.toSerializedState(curGameState)
-        sim.reset(serializedState)
+        sim.reset(curSerializedState)
         const simState = await sim.action(action)
         const newGameState = simState.gameState
         const newUnit = newGameState.players[startUnit.team].units.find(u => u.id === startUnit.id)
@@ -83,7 +219,7 @@ export default class Pathfinding {
           continue
         }
 
-        const neighbor = new MovementState(newUnit.pos, newUnit.canAct(), newGameState.turn)
+        const neighbor = new MovementState(newUnit.pos, newUnit.canAct(), newGameState)
         neighbor.cameFrom = cur
         neighbor.action = action
 

@@ -6,6 +6,7 @@
   "scripts": {
     "start": "npm run build && npm run sim && npm run vis",
     "test": "jest --watch",
+    "path-test": "node dist/helpers/path-test.js",
     "build": "tsc",
     "watch": "tsc -w",
     "sim": "lux-ai-2021 --width=12 --height=12 --storeLogs=false --statefulReplay --out=replays/replay.json dist/agents/sim.js dist/agents/hello-world.js",

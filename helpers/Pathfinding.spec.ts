@@ -24,17 +24,17 @@ describe(`Simulation-driven pathfinding w/ 'turns' heuristic`, () => {
     const { unit, gameState, sim } = await initSim()
     const goal = new Position(5, 5)
 
-    const path = await Pathfinding.astar_sim_turns(unit, goal, gameState, sim)
+    const result = await Pathfinding.astar_move(unit, goal, gameState, sim)
 
-    expect(path).not.toBeNull()
-    expect(path.length).toBe(Pathfinding.manhattan(unit.pos, goal) * 2)
+    expect(result).not.toBeNull()
+    expect(result.path.length).toBe(Pathfinding.manhattan(unit.pos, goal) * 2)
   })
 
   test('Returns null if path is impossible', async () => {
     const { unit, gameState, sim } = await initSim()
     const goal = new Position(-1, -1)
 
-    const path = await Pathfinding.astar_sim_turns(unit, goal, gameState, sim)
+    const path = await Pathfinding.astar_move(unit, goal, gameState, sim)
 
     expect(path).toBeNull()
   })
@@ -45,9 +45,13 @@ describe(`Simulation-driven pathfinding w/ 'turns' heuristic`, () => {
     const obstacle = new Unit(1, GAME_CONSTANTS.UNIT_TYPES.WORKER, 'u_1', 0, 2, 0, 0, 0, 0)
     gameState.players[1].units.push(obstacle)
 
-    const path = await Pathfinding.astar_sim_turns(unit, goal, gameState, sim)
+    const path = await Pathfinding.astar_move(unit, goal, gameState, sim)
 
     expect(path).not.toBeNull()
     // console.log(path.map(node => `(${node.pos.x}, ${node.pos.y}) => ${node.action}`).join('\n'))
+  })
+
+  test('Build a city as fast as possible', async () => {
+
   })
 })
