@@ -6,6 +6,7 @@ import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Pathfinding from './Pathfinding'
 import Sim from './Sim'
+import { initSeed } from './test-util'
 
 const initSim = async () => {
   const sim = await Sim.create()
@@ -52,6 +53,26 @@ describe(`Simulation-driven pathfinding w/ 'turns' heuristic`, () => {
   })
 
   test('Build a city as fast as possible', async () => {
+    const sim = await initSeed()
+    const replaySim = await initSeed('replays/test-astar-build-city.json')
+    const gameState = sim.getGameState()
+    const unit = gameState.players[0].units[0]
 
+    const path = await Pathfinding.astar_build(unit, gameState, sim)
+
+    expect(path).not.toBeNull()
+    expect(path.length).toBe(6)
+
+    const actions = path.map(node => node.action).filter(action => !!action)
+    for (const action of actions)
+      await replaySim.action(action)
+
+    const newPlayer = replaySim.getGameState().players[0]
+    const newUnit = newPlayer.units[0]
+    const newCities = Array.from(newPlayer.cities.values())
+    expect(newUnit.pos.equals(new Position(1, 5))).toBe(true)
+    expect(newCities.length).toBe(2)
+
+    replaySim.saveReplay()
   })
 })

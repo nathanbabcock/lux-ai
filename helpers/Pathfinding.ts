@@ -40,7 +40,7 @@ export default class Pathfinding {
       - (goalCanAct ? 0 : 1) // Whether to wait for cooldown on goal tile
   }
 
-  static async astar_build_city(startUnit: Unit, startGameState: GameState, sim: Sim): Promise<MovementState[] | null> {
+  static async astar_build(startUnit: Unit, startGameState: GameState, sim: Sim): Promise<MovementState[] | null> {
     const destinations = new Map<Cell, MetaPathNode>()
     const map = startGameState.map
     const player = startGameState.players[startUnit.team]
@@ -81,16 +81,13 @@ export default class Pathfinding {
         .filter(dest => dest.actualDistance === undefined)
         .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
       const closestUncheckedDest = uncheckedDestinations.length === 0 ? undefined : uncheckedDestinations[0]
-      if (closestUncheckedDest)
-        console.log(`Closest empty pos: d(${closestUncheckedDest.pos.x}, ${closestUncheckedDest.pos.y})=${closestUncheckedDest.estimatedDistance}`)
-
+      
       const uncheckedDetours = Array.from(destinations.values())
         .map(dest => Array.from(dest.detours.values())).flat()
         .filter(detour => detour.actualDistance === undefined)
         .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
       const closestUncheckedDetour = uncheckedDetours.length === 0 ? undefined : uncheckedDetours[0]
-      console.log(`Closest detour: d((${closestUncheckedDetour.pos.x}, ${closestUncheckedDetour.pos.y}) => (${closestUncheckedDetour.parent.pos.x}, ${closestUncheckedDetour.parent.pos.y})) = ${closestUncheckedDetour.estimatedDistance}`)
-
+      
       if (!closestUncheckedDest && !closestUncheckedDetour)
         return null
       else if (!closestUncheckedDest || closestUncheckedDest.estimatedDistance > closestUncheckedDetour.estimatedDistance)
