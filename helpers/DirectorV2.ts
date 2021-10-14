@@ -27,7 +27,7 @@ export default class DirectorV2 {
   getUnitAction(unit_id: string, turn: number): string | null {
     const unitPath = this.pathAssignments.get(unit_id)
     if (!unitPath) return null
-    const action = unitPath.get(turn)
+    const action = unitPath.get(turn + 1)
     return action
   }
 
@@ -38,6 +38,27 @@ export default class DirectorV2 {
       if (action) actions.push(action)
     }
     return actions
+  }
+
+  getBuildAssignment(x: number, y: number): string | null {
+    for (const [unit_id, position] of this.buildAssignments.entries())
+      if (position.x === x && position.y === y)
+        return unit_id
+    return null
+  }
+
+  clearAssignments(turn: number) {
+    for (const path of this.pathAssignments.values()) {
+      for (const key of path.keys()) {
+        if (key <= turn)
+          path.delete(key)
+      }
+    }
+
+    for (const unit_id of this.buildAssignments.keys()) {
+      if (!this.pathAssignments.has(unit_id) || this.pathAssignments.get(unit_id).size === 0)
+        this.buildAssignments.delete(unit_id)
+    }
   }
 
   clone(): DirectorV2 {

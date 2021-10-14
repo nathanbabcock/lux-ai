@@ -94,13 +94,11 @@ describe(`Simulation-driven pathfinding w/ 'turns' heuristic`, () => {
 
     const pathResult1 = await Pathfinding.astar_move(unit1, goal1, clone(gameState), sim)
     expect(pathResult1).not.toBeNull()
-    console.log('Path 1:', pathResult1.path.map(node => `(${node.pos.x}, ${node.pos.y})`))
 
     director.setPath(unit1.id, pathResult1.path)
 
     const pathResult2 = await Pathfinding.astar_move(unit2, goal2, clone(gameState), sim, director)
     expect(pathResult2).not.toBeNull()
     expect(pathResult2.path[3].pos.equals(pathResult1.path[3].pos)).toBe(false)
-    console.log('Path 2:', pathResult2.path.map(node => `(${node.pos.x}, ${node.pos.y})`))
   })
 })

@@ -5,6 +5,7 @@ import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Convert from './Convert'
 import DirectorV2 from './DirectorV2'
+import { log } from './logging'
 import Sim from './Sim'
 import { MovementState, StateMap, StateNode } from './StateNode'
 
@@ -41,7 +42,12 @@ export default class Pathfinding {
       - (goalCanAct ? 0 : 1) // Whether to wait for cooldown on goal tile
   }
 
-  static async astar_build(startUnit: Unit, startGameState: GameState, sim: Sim): Promise<MovementState[] | null> {
+  static async astar_build(
+    startUnit: Unit,
+    startGameState: GameState,
+    sim: Sim,
+    director?: DirectorV2,
+  ): Promise<MovementState[] | null> {
     const destinations = new Map<Cell, MetaPathNode>()
     const map = startGameState.map
     const player = startGameState.players[startUnit.team]
@@ -50,6 +56,7 @@ export default class Pathfinding {
         const cell = map.getCell(x, y)
         if (cell.resource && cell.resource.amount > 0) continue
         if (cell.citytile) continue
+        if (director && director.getBuildAssignment(x, y)) continue
         destinations.set(cell, {
           pos: cell.pos,
           estimatedDistance: Pathfinding.turns(startUnit.pos, startUnit.canAct(), cell.pos, true),
@@ -97,11 +104,12 @@ export default class Pathfinding {
         return closestUncheckedDest
     }
 
+    const MAX_TRIES_CUTOFF = 25
+    let tries = 0
     let curBestSolution: null | MetaPathNode = null
-
     let next: MetaPathNode
     while (next = getNextNodeToCheck()) {
-      if (curBestSolution && next.estimatedDistance >= curBestSolution.actualDistance) {
+      if (curBestSolution && (tries > MAX_TRIES_CUTOFF || next.estimatedDistance >= curBestSolution.actualDistance)) {
         const path = curBestSolution.path
 
         const wait = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, true)
@@ -115,9 +123,14 @@ export default class Pathfinding {
         return path
       }
 
+      if (tries > MAX_TRIES_CUTOFF)
+        return null
+
+      tries++
+
       let pathfindingResult: PathfindingResult
       if (next.parent) {
-        const pathPart1 = await Pathfinding.astar_move(startUnit, curBestSolution.pos, startGameState, sim)
+        const pathPart1 = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim, director)
         if (!pathPart1) {
           next.actualDistance = Infinity
           continue
@@ -125,7 +138,7 @@ export default class Pathfinding {
 
         const newGameState = pathPart1.gameState
         const newUnit = newGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
-        const pathPart2 = await Pathfinding.astar_move(newUnit, curBestSolution.parent.pos, newGameState, sim)
+        const pathPart2 = await Pathfinding.astar_move(newUnit, next.parent.pos, newGameState, sim, director)
 
         if (!pathPart2) {
           next.actualDistance = Infinity
@@ -142,7 +155,12 @@ export default class Pathfinding {
         const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
         next.cargoFull = endUnit.getCargoSpaceLeft() === 0
       } else {
-        pathfindingResult = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim)
+        pathfindingResult = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim, director)
+        if (!pathfindingResult) {
+          next.actualDistance = Infinity
+          continue
+        }
+        
         next.path = pathfindingResult.path
         next.actualDistance = pathfindingResult.path.length
 

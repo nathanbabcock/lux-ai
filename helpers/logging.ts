@@ -28,9 +28,9 @@ export function _try(fn: Function): void {
   }
 }
 
-export async function tryAsync(fn: Function): Promise<void> {
+export async function tryAsync(fn: Function): Promise<any> {
   try {
-    await fn()
+    return await fn()
   } catch (e) {
     log(e.stack)
   }
