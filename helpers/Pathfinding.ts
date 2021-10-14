@@ -4,6 +4,7 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Convert from './Convert'
+import DirectorV2 from './DirectorV2'
 import Sim from './Sim'
 import { MovementState, StateMap, StateNode } from './StateNode'
 
@@ -157,7 +158,13 @@ export default class Pathfinding {
     return curBestSolution ? curBestSolution.path : null
   }
 
-  static async astar_move(startUnit: Unit, goal: Position, startGameState: GameState, sim: Sim): Promise<PathfindingResult | null> {
+  static async astar_move(
+    startUnit: Unit,
+    goal: Position,
+    startGameState: GameState,
+    sim: Sim,
+    director?: DirectorV2,
+  ): Promise<PathfindingResult | null> {
     /** Heuristic for *minimum* number of turns required to get from @param start state to @param goal state */
     const h = (start: MovementState, goal: MovementState) =>
       Pathfinding.turns(start.pos, start.canAct, goal.pos, goal.canAct)
@@ -204,7 +211,11 @@ export default class Pathfinding {
 
       for (const action of actions) {
         sim.reset(curSerializedState)
-        const simState = await sim.action(action)
+        const actions = [action]
+        if (director)
+          actions.push(...director.getTurnActions(curSerializedState.turn + 1))
+
+        const simState = await sim.action(actions)
         const newGameState = simState.gameState
         const newUnit = newGameState.players[startUnit.team].units.find(u => u.id === startUnit.id)
 

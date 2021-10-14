@@ -4,9 +4,11 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Player } from '../lux/Player'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
+import DirectorV2 from './DirectorV2'
 import Pathfinding from './Pathfinding'
 import Sim from './Sim'
 import { initSeed } from './test-util'
+import { clone } from './util'
 
 const initSim = async () => {
   const sim = await Sim.create()
@@ -74,5 +76,31 @@ describe(`Simulation-driven pathfinding w/ 'turns' heuristic`, () => {
     expect(newCities.length).toBe(2)
 
     replaySim.saveReplay()
+  })
+
+  test('Two units avoid collision course', async () => {
+    const sim = await Sim.create()
+    const unit1 = new Unit(0, GAME_CONSTANTS.UNIT_TYPES.WORKER, 'u_0', 0, 2, 0, 0, 0, 0)
+    const unit2 = new Unit(0, GAME_CONSTANTS.UNIT_TYPES.WORKER, 'u_1', 2, 0, 0, 0, 0, 0)
+    const gameState = new GameState()
+    gameState.map = new GameMap(10, 10)
+    gameState.id = unit1.team
+    gameState.players = [new Player(0), new Player(1)]
+    gameState.players[0].units = [unit1, unit2]
+    gameState.turn = 0
+    const goal1 = new Position(5, 2)
+    const goal2 = new Position(2, 5)
+    const director = new DirectorV2()
+
+    const pathResult1 = await Pathfinding.astar_move(unit1, goal1, clone(gameState), sim)
+    expect(pathResult1).not.toBeNull()
+    console.log('Path 1:', pathResult1.path.map(node => `(${node.pos.x}, ${node.pos.y})`))
+
+    director.setPath(unit1.id, pathResult1.path)
+
+    const pathResult2 = await Pathfinding.astar_move(unit2, goal2, clone(gameState), sim, director)
+    expect(pathResult2).not.toBeNull()
+    expect(pathResult2.path[3].pos.equals(pathResult1.path[3].pos)).toBe(false)
+    console.log('Path 2:', pathResult2.path.map(node => `(${node.pos.x}, ${node.pos.y})`))
   })
 })
