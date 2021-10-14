@@ -1,12 +1,11 @@
 import { GameState } from '../lux/Agent'
+import { Cell } from '../lux/Cell'
+import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Convert from './Convert'
-import { MovementState, StateMap, StateNode } from './StateNode'
 import Sim from './Sim'
-import { deepClone } from './util'
-import { Cell } from '../lux/Cell'
-import GAME_CONSTANTS from '../lux/game_constants.json'
+import { MovementState, StateMap, StateNode } from './StateNode'
 
 export type MetaPathNode = {
   pos: Position
@@ -104,10 +103,19 @@ export default class Pathfinding {
 
     let next: MetaPathNode
     while (next = getNextNodeToCheck()) {
-      if (curBestSolution && next.estimatedDistance >= curBestSolution.actualDistance)
-        return curBestSolution.path
-    
-      console.log(`Next dest to check: ${next.pos.x}, ${next.pos.y}`)
+      if (curBestSolution && next.estimatedDistance >= curBestSolution.actualDistance) {
+        const path = curBestSolution.path
+
+        const wait = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, true)
+        wait.action = startUnit.move('c')
+        path.push(wait)
+
+        const build = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, false)
+        build.action = startUnit.buildCity()
+        path.push(build)
+
+        return path
+      }
 
       let pathfindingResult: PathfindingResult
       if (next.parent) {
@@ -136,8 +144,6 @@ export default class Pathfinding {
         const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
         next.cargoFull = endUnit.getCargoSpaceLeft() === 0
       } else {
-        console.log(`cargoSpaceLeft @ start = ${startUnit.getCargoSpaceLeft()}`)
-
         pathfindingResult = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim)
         next.path = pathfindingResult.path
         next.actualDistance = pathfindingResult.path.length
@@ -145,11 +151,7 @@ export default class Pathfinding {
         const endGameState = pathfindingResult.gameState
         const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
         next.cargoFull = endUnit.getCargoSpaceLeft() === 0
-
-        console.log(`cargoSpaceLeft @ end = ${endUnit.getCargoSpaceLeft()}, ${endUnit.pos.x}, ${endUnit.pos.y}`)
       }
-
-      console.log(`Cargo full at ${next.pos.x}, ${next.pos.y} = ${next.cargoFull}`)
 
       if (next.cargoFull && (!curBestSolution || next.actualDistance < curBestSolution.actualDistance))
         curBestSolution = next
