@@ -23,6 +23,19 @@ export class MovementState extends StateNode {
   }
 }
 
+export class UnitState extends StateNode {
+  constructor(
+    public pos: Position,
+    public canAct: boolean,
+    public cargoFull: boolean,
+    public gameState: GameState = undefined,
+  ) { super() }
+
+  equals(other: UnitState): boolean {
+    return this.pos.equals(other.pos) && this.canAct === other.canAct && this.cargoFull === other.cargoFull
+  }
+}
+
 /**
  * An array-backed mapping from unique {@link StateNode} representations
  * to a number (used for tracking fScores and gScores)

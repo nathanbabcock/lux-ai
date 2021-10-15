@@ -24,7 +24,7 @@ async function updateUnits(turn: Turn) {
     }
     
     log(`Starting pathfinding for ${unit.id}`)
-    const plan: MovementState[] = await tryAsync(async () => await Pathfinding.astar_build(unit, clone(turn.gameState), sim, director))
+    const plan: MovementState[] = await tryAsync(async () => await Pathfinding.meta_astar_build(unit, clone(turn.gameState), sim, director))
     if (!plan || plan.length === 0) {
       log(`Could not find plan for unit ${unit.id}`)
       continue

@@ -1,13 +1,15 @@
 import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
+import { GameMap } from '../lux/GameMap'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Convert from './Convert'
 import DirectorV2 from './DirectorV2'
+import { getResourceAdjacency } from './helpers'
 import { log } from './logging'
 import Sim from './Sim'
-import { MovementState, StateMap, StateNode } from './StateNode'
+import { MovementState, StateMap, StateNode, UnitState } from './StateNode'
 
 export type MetaPathNode = {
   pos: Position
@@ -42,7 +44,7 @@ export default class Pathfinding {
       - (goalCanAct ? 0 : 1) // Whether to wait for cooldown on goal tile
   }
 
-  static async astar_build(
+  static async meta_astar_build(
     startUnit: Unit,
     startGameState: GameState,
     sim: Sim,
@@ -177,6 +179,80 @@ export default class Pathfinding {
     }
 
     return curBestSolution ? curBestSolution.path : null
+  }
+
+  static closest_empty_tile(state: UnitState, map: GameMap): number {
+    let closestEmptyTileDist: number = Infinity
+    let closestEmptyTile: Position = null
+
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const cell = map.getCell(x, y)
+        if (cell.citytile) continue
+        if (cell.resource && cell.resource.amount > 0) continue
+        const dist = Pathfinding.turns(state.pos, state.canAct, cell.pos, true)
+        if (dist < closestEmptyTileDist) {
+          closestEmptyTileDist = dist
+          closestEmptyTile = cell.pos
+        }
+      }
+    }
+
+    if (!closestEmptyTile)
+      return Infinity
+    return closestEmptyTileDist
+  }
+
+  static closest_resource(state: UnitState, map: GameMap): number {
+    let closestResourceDist: number = Infinity
+    let closestResource: Position = null
+
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const cell = map.getCell(x, y)
+        if (cell.citytile) continue
+        if (getResourceAdjacency(cell, map) === 0) continue
+        const dist = Pathfinding.turns(state.pos, state.canAct, cell.pos, true)
+        if (dist < closestResourceDist) {
+          closestResourceDist = dist
+          closestResource = cell.pos
+        }
+      }
+    }
+
+    if (!closestResource)
+      return Infinity
+    return closestResourceDist
+  }
+
+  /**
+   * Heuristic function for building a city.
+   * 
+   * Returns the minimum number of turns to reach a state where a city can be built
+   * 
+   * - If cargo is full, return the movement cost to the closest potential city location
+   *   (optimistically hoping that resources are found along the way, the best case scenario)
+   * - If cargo is not full:
+   *   - If not currently on a resource-giving tile, return the movement cost to the closest resource
+   *     (without going to *some* resource, the goal will never be reached)
+   *   - If currently on a resource-giving tile, return the movement cost to the closest potential city location
+   *     (again hopefully assuming that resources are found along the way)
+   * 
+   * This ignores ROADS and CARTS, making the heuristic technically not [admissible](https://en.wikipedia.org/wiki/Admissible_heuristic)
+   * (at least for an exhaustive search of all possible strategies)
+   * 
+   * Complexity: O(n^2), for n = map size ∈ [12, 16, 24, 32]
+   * Reasoning: Must check every tile (either city or resource) on the map for its distance to the given tile
+   */
+  static build_heuristic(state: UnitState, gameState: GameState): number {
+    const map = gameState.map
+    const cell = map.getCell(state.pos.x, state.pos.y)
+    const onResourceAdjacentTile = !cell.citytile && getResourceAdjacency(cell, map) > 0
+
+    if (state.cargoFull || onResourceAdjacentTile)
+      return Pathfinding.closest_empty_tile(state, map)
+    else
+      return Pathfinding.closest_resource(state, map)
   }
 
   static async astar_move(

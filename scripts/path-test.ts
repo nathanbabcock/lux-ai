@@ -28,7 +28,7 @@ const initSim = async () => {
 async function main() {
   const { unit, gameState, sim } = await initSim()
   console.time('Meta-A*')
-  const path = await Pathfinding.astar_build(unit, gameState, sim)
+  const path = await Pathfinding.meta_astar_build(unit, gameState, sim)
   console.log(path)
   console.timeEnd('Meta-A*')
 }
