@@ -21,9 +21,10 @@ export type MetaPathNode = {
   parent?: MetaPathNode
 }
 
-export type PathfindingResult = {
-  path: MovementState[]
+export type PathfindingResult<T> = {
+  path: T[]
   gameState: GameState
+  tries?: number
 }
 
 export default class Pathfinding {
@@ -133,7 +134,7 @@ export default class Pathfinding {
 
       tries++
 
-      let pathfindingResult: PathfindingResult
+      let pathfindingResult: PathfindingResult<MovementState>
       if (next.parent) {
         const pathPart1 = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim, director)
         if (!pathPart1) {
@@ -255,13 +256,123 @@ export default class Pathfinding {
       return Pathfinding.closest_resource(state, map)
   }
 
+  static async astar_build(
+    startUnit: Unit,
+    startGameState: GameState,
+    sim: Sim,
+    director?: DirectorV2,
+  ): Promise<PathfindingResult<UnitState> | null> {
+    const h = Pathfinding.build_heuristic
+    
+    const startState = new UnitState(startUnit.pos, startUnit.canAct(), startUnit.getCargoSpaceLeft() === 0)
+    startState.gameState = startGameState
+
+    /** @returns true if a unit is ready to build here immediately in the next turn (cooldown = 0, cargo = full, empty tile) */
+    const isGoal = (state: UnitState): boolean => {
+      if (!state.cargoFull) return false
+      if (!state.canAct) return false
+      const cell = state.gameState.map.getCell(state.pos.x, state.pos.y)
+      if (cell.citytile) return false
+      if (cell.resource && cell.resource.amount > 0) return false
+      return true
+    }
+
+    const openSet = [startState]
+
+    const gScore = new StateMap()
+    gScore.set(startState, 0)
+
+    const fScore = new StateMap()
+    fScore.set(startState, h(startState, startGameState))
+
+    const MAX_TRIES = 100
+    let tries = 0
+    while (openSet.length > 0) {
+      tries++
+
+      // if (tries > MAX_TRIES) {
+      //   log(`Bailing out of pathfinding after 100 tries`)
+      //   return null
+      // }
+
+      let cur = openSet[0]
+      openSet.forEach(node => {
+        if (fScore.get(node) < fScore.get(cur)) cur = node
+      })
+
+      if (isGoal(cur)) {
+        const path = Pathfinding.reconstruct_path(cur)
+        const last = path[path.length - 1]
+        const build = new UnitState(last.pos, false, false)
+        build.action = startUnit.buildCity()
+        path.push(build)
+
+        return {
+          path,
+          gameState: cur.gameState,
+          tries,
+        }
+      }
+
+      openSet.splice(openSet.indexOf(cur), 1)
+      
+      const curGameState = cur.gameState
+      const curSerializedState = Convert.toSerializedState(curGameState)
+      const curUnit = curGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+
+      const actions: string[] = []
+      if (!cur.canAct)
+        actions.push(curUnit.move('c'))
+      else {
+        const directions = ['n', 'e', 's', 'w', 'c']
+        directions.forEach(dir => actions.push(startUnit.move(dir)))
+      }
+
+      for (const action of actions) {
+        sim.reset(curSerializedState)
+        const actions = [action]
+        if (director)
+          actions.push(...director.getTurnActions(curSerializedState.turn + 1))
+
+        const simState = await sim.action(actions)
+        const newGameState = simState.gameState
+        const newUnit = newGameState.players[startUnit.team].units.find(u => u.id === startUnit.id)
+
+        if (!newUnit) {
+          //console.warn(`Unit used for pathfinding has disappeared on turn ${curGameState.turn}, presumed DEAD`)
+          continue
+        }
+
+        const isWaitAction = action.startsWith('m') && action.endsWith('c')
+        if (!isWaitAction && newUnit.pos.equals(curUnit.pos)) {
+          //console.warn(`Attempted move failed -- skipping to next node`)
+          continue
+        }
+
+        const neighbor = new UnitState(newUnit.pos, newUnit.canAct(), newUnit.getCargoSpaceLeft() === 0, newGameState)
+        neighbor.cameFrom = cur
+        neighbor.action = action
+
+        const tentative_gScore = gScore.get(cur) + 1 // movement cost from cur to neighbor = 1 turn
+        if (tentative_gScore < gScore.get(neighbor) || !gScore.has(neighbor)) {
+          gScore.set(neighbor, tentative_gScore)
+          fScore.set(neighbor, tentative_gScore + h(neighbor, newGameState))
+          if (!openSet.find(node => node.equals(neighbor)))
+            openSet.push(neighbor)
+        }
+      }
+    }
+
+    return null
+  }
+
   static async astar_move(
     startUnit: Unit,
     goal: Position,
     startGameState: GameState,
     sim: Sim,
     director?: DirectorV2,
-  ): Promise<PathfindingResult | null> {
+  ): Promise<PathfindingResult<MovementState> | null> {
     /** Heuristic for *minimum* number of turns required to get from @param start state to @param goal state */
     const h = (start: MovementState, goal: MovementState) =>
       Pathfinding.turns(start.pos, start.canAct, goal.pos, goal.canAct)

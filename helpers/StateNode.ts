@@ -34,6 +34,10 @@ export class UnitState extends StateNode {
   equals(other: UnitState): boolean {
     return this.pos.equals(other.pos) && this.canAct === other.canAct && this.cargoFull === other.cargoFull
   }
+
+  toString(): string {
+    return `UnitState(x=${this.pos.x}, y=${this.pos.y}, canAct=${this.canAct}, cargoFull=${this.cargoFull})`
+  }
 }
 
 /**

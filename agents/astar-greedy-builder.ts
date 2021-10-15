@@ -2,7 +2,7 @@ import DirectorV2 from '../helpers/DirectorV2'
 import { clearLog, log, tryAsync } from '../helpers/logging'
 import Pathfinding from '../helpers/Pathfinding'
 import Sim from '../helpers/Sim'
-import { MovementState } from '../helpers/StateNode'
+import { MovementState as UnitState } from '../helpers/StateNode'
 import Turn from '../helpers/Turn'
 import { clone } from '../helpers/util'
 import { Agent, annotate } from '../lux/Agent'
@@ -14,29 +14,35 @@ let sim: Sim
 
 async function updateUnits(turn: Turn) {
   for (const unit of turn.player.units) {
-    if (unit.type === GAME_CONSTANTS.UNIT_TYPES.CART) continue
+    try {
+      if (unit.type === GAME_CONSTANTS.UNIT_TYPES.CART) continue
 
-    const plannedAction = director.getUnitAction(unit.id, turn.gameState.turn)
-    if (plannedAction) {
-      log(`Unit ${unit.id} has existing assigned action: ${plannedAction}`)
-      turn.actions.push(plannedAction)
-      continue
+      const plannedAction = director.getUnitAction(unit.id, turn.gameState.turn)
+      if (plannedAction) {
+        log(`Unit ${unit.id} has existing assigned action: ${plannedAction}`)
+        turn.actions.push(plannedAction)
+        continue
+      }
+      
+      log(`Starting pathfinding for ${unit.id}`)
+      const result = await Pathfinding.astar_build(unit, clone(turn.gameState), sim, director)
+      if (!result || result.path.length === 0){
+        log(`Could not find plan for unit ${unit.id}`)
+        continue
+      }
+      const plan = result.path
+      const destination = plan[plan.length - 1].pos
+      director.setPath(unit.id, plan)
+      director.buildAssignments.set(unit.id, destination)
+      const firstStep = plan[1].action
+      turn.actions.push(firstStep)
+      log(`Unit ${unit.id} created new plan to build @ (${destination.x}, ${destination.y})`)
+      log(`- Pathfinding took ${result.tries} tries`)
+      log(`- Path length = ${plan.length}`)
+      log(`- First step: ${firstStep}`)
+    } catch (e) {
+      log(e.stack)
     }
-    
-    log(`Starting pathfinding for ${unit.id}`)
-    const plan: MovementState[] = await tryAsync(async () => await Pathfinding.meta_astar_build(unit, clone(turn.gameState), sim, director))
-    if (!plan || plan.length === 0) {
-      log(`Could not find plan for unit ${unit.id}`)
-      continue
-    }
-
-    const destination = plan[plan.length - 1].pos
-    director.setPath(unit.id, plan)
-    director.buildAssignments.set(unit.id, destination)
-    const firstStep = plan[1].action
-    turn.actions.push(firstStep)
-    log(`Unit ${unit.id} created new plan to build @ (${destination.x}, ${destination.y})`)
-    log(`Unit ${unit.id} first step: ${firstStep}`)
   }
 }
 

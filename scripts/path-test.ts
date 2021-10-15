@@ -27,10 +27,14 @@ const initSim = async () => {
 
 async function main() {
   const { unit, gameState, sim } = await initSim()
-  console.time('Meta-A*')
-  const path = await Pathfinding.meta_astar_build(unit, gameState, sim)
-  console.log(path)
-  console.timeEnd('Meta-A*')
+  console.time('Time')
+  const pathResult = await Pathfinding.astar_build(unit, gameState, sim)
+  console.group('Shortest Path:')
+  pathResult.path.forEach(node => console.log(node.toString()))
+  console.groupEnd()
+  console.log(`Path length: ${pathResult.path.length}`)
+  console.log(`Took ${pathResult.tries} steps to find path`)
+  console.timeEnd('Time')
 }
 
 main()
