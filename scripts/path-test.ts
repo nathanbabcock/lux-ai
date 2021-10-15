@@ -1,6 +1,6 @@
 import { GameMap as LuxGameMap } from '@lux-ai/2021-challenge'
-import Pathfinding from './Pathfinding'
-import Sim from './Sim'
+import Pathfinding from '../helpers/Pathfinding'
+import Sim from '../helpers/Sim'
 
 const initSim = async () => {
   const sim = await Sim.create({

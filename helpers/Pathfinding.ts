@@ -104,12 +104,15 @@ export default class Pathfinding {
         return closestUncheckedDest
     }
 
-    const MAX_TRIES_CUTOFF = 25
+    const MAX_TRIES = Infinity
     let tries = 0
     let curBestSolution: null | MetaPathNode = null
     let next: MetaPathNode
     while (next = getNextNodeToCheck()) {
-      if (curBestSolution && (tries > MAX_TRIES_CUTOFF || next.estimatedDistance >= curBestSolution.actualDistance)) {
+      if (tries > MAX_TRIES)
+        log(`astar_build bailout(${MAX_TRIES})`)
+
+      if (curBestSolution && (tries > MAX_TRIES || next.estimatedDistance >= curBestSolution.actualDistance)) {
         const path = curBestSolution.path
 
         const wait = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, true)
@@ -123,7 +126,7 @@ export default class Pathfinding {
         return path
       }
 
-      if (tries > MAX_TRIES_CUTOFF)
+      if (tries > MAX_TRIES)
         return null
 
       tries++
@@ -200,11 +203,20 @@ export default class Pathfinding {
     const fScore = new StateMap()
     fScore.set(startState, h(startState, goalState))
 
+
+    const MAX_TRIES = Infinity
+    let tries = 0
     while (openSet.length > 0) {
+      tries++
       let cur = openSet[0]
       openSet.forEach(node => {
         if (fScore.get(node) < fScore.get(cur)) cur = node
       })
+
+      if (tries > MAX_TRIES) {
+        log(`astar_move bailout(${MAX_TRIES})`)
+        return null
+      }
 
       if (cur.equals(goalState)) {
         return {
