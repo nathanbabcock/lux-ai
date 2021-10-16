@@ -9,7 +9,7 @@
     "path-test": "node dist/scripts/path-test.js",
     "build": "tsc",
     "watch": "tsc -w",
-    "sim": "lux-ai-2021 --maxtime 30000 --width=12 --height=12 --storeLogs=false --statefulReplay --out=replays/replay.json dist/agents/astar-greedy-builder.js dist/agents/hello-world.js",
+    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay --out=replays/replay.json dist/agents/astar-greedy-builder.js dist/agents/hello-world.js",
     "vis": "lux-ai-vis replays/replay.json",
     "sim-vis": "npm run sim && npm run vis",
     "tournament": "lux-ai-2021 --storeLogs=false --storeReplay=false --rankSystem=wins --tournament dist/agents/tree-search.js dist/agents/director-expander.js",

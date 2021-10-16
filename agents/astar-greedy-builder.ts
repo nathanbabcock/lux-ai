@@ -2,11 +2,12 @@ import DirectorV2 from '../helpers/DirectorV2'
 import { clearLog, log, tryAsync } from '../helpers/logging'
 import Pathfinding from '../helpers/Pathfinding'
 import Sim from '../helpers/Sim'
-import { MovementState as UnitState } from '../helpers/StateNode'
+import { UnitState } from '../helpers/StateNode'
 import Turn from '../helpers/Turn'
 import { clone } from '../helpers/util'
-import { Agent, annotate } from '../lux/Agent'
+import { Agent, annotate, GameState } from '../lux/Agent'
 import GAME_CONSTANTS from '../lux/game_constants.json'
+import { Position } from '../lux/Position'
 
 const agent = new Agent()
 const director = new DirectorV2()
@@ -58,11 +59,25 @@ function updateCities(turn: Turn) {
   }
 }
 
-function updateAnnotations(turn: Turn) {
+function annotatePlans(turn: Turn) {
   for (const [unit_id, assignment] of director.buildAssignments) {
     const unit = turn.player.units.find(u => u.id === unit_id)
     if (!unit) continue
     turn.actions.push(annotate.line(unit.pos.x, unit.pos.y, assignment.x, assignment.y))
+  }
+}
+
+function annotateHeuristic(turn: Turn) {
+  const gameState = turn.gameState
+  const map = gameState.map
+  for (let y = 0; y < map.height; y++) {
+    for (let x = 0; x < map.width; x++) {
+      const stateCargoEmpty = new UnitState(new Position(x, y), true, false)
+      const stateCargoFull = new UnitState(new Position(x, y), true, true)
+      const heuristicEmpty = Pathfinding.build_heuristic(stateCargoEmpty, gameState)
+      const heuristicFull = Pathfinding.build_heuristic(stateCargoFull, gameState)
+      turn.actions.push(annotate.text(x, y, `${heuristicEmpty}/${heuristicFull}`))
+    }
   }
 }
 
@@ -81,7 +96,8 @@ async function main() {
 
     await updateUnits(turn)
     updateCities(turn)
-    updateAnnotations(turn)
+    annotatePlans(turn)
+    // annotateHeuristic(turn)
 
     //director.clearAssignments(gameState.turn)
 

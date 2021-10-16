@@ -22,9 +22,11 @@ async function main() {
     const map = gameState.map
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
-        const state = new UnitState(new Position(x, y), true, false)
-        const heuristic = Pathfinding.build_heuristic(state, gameState)
-        actions.push(annotate.text(x, y, `${heuristic}`))
+        const stateCargoEmpty = new UnitState(new Position(x, y), true, false)
+        const stateCargoFull = new UnitState(new Position(x, y), true, true)
+        const heuristicEmpty = Pathfinding.build_heuristic(stateCargoEmpty, gameState)
+        const heuristicFull = Pathfinding.build_heuristic(stateCargoFull, gameState)
+        actions.push(annotate.text(x, y, `${heuristicEmpty}/${heuristicFull}`))
       }
     }
     log(`O(n^4) heuristic completed in ${new Date().getTime() - start}ms`)
