@@ -97,7 +97,7 @@ async function main() {
     await updateUnits(turn)
     updateCities(turn)
     annotatePlans(turn)
-    // annotateHeuristic(turn)
+    annotateHeuristic(turn)
 
     //director.clearAssignments(gameState.turn)
 
