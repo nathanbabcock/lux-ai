@@ -10,6 +10,7 @@ import Convert from './Convert'
 import Sim from './Sim'
 import { chooseRandom, deepClone } from './util'
 import uuid from './uuid'
+import { log } from './logging'
 
 export type SimpleAssignment = {unit: string, cluster: number}
 export type SimpleAssignments = SimpleAssignment[]
@@ -58,6 +59,7 @@ export default class MonteCarlo {
         const unit_id = unitAssignment.unit
         const cluster = clusters[unitAssignment.cluster]
         const unit = units.find(unit => unit.id === unit_id)
+        if (!unit) return
         const mission = MonteCarlo.generateSpecificSettlerMissionForUnit(unit, cluster, map)
         assignmentMap.set(unit_id, mission)
       })
@@ -79,7 +81,7 @@ export default class MonteCarlo {
     const serializedState = Convert.toSerializedState(node.gameState)
     sim.reset(serializedState)
 
-    const curAssignments = MonteCarlo.copyAssignments(node.assignments)
+    const curAssignments = MonteCarlo.cloneAssignments(node.assignments)
     node.assignmentsToString()
 
     const curGameState = deepClone(GameState, node.gameState)
@@ -132,12 +134,17 @@ export default class MonteCarlo {
   }
 
   static async simAndBackProp(sim: Sim, node: TreeNode) {
-    const value = await MonteCarlo.simulation(sim, node)
-    MonteCarlo.backPropagation(node, value)
+    try {
+      const value = await MonteCarlo.simulation(sim, node)
+      MonteCarlo.backPropagation(node, value)
+    } catch (e) {
+      log(e.stack)
+    }
   }
 
   static generateAssignmentsSimple(units: string[], clusters: number[]) {
     const assignments: SimpleAssignments[] = []
+    if (units.length === 0) return assignments
     for (const cluster of clusters) {
       const newAssignment = {unit: units[0], cluster}
 
@@ -187,7 +194,7 @@ export default class MonteCarlo {
   }
 
   /** Deep clone of an assignment map, with new internal Mission and Position objects */
-  static copyAssignments(assignments: Map<string, Mission>): Map<string, Mission> {
+  static cloneAssignments(assignments: Map<string, Mission>): Map<string, Mission> {
     const newAssignments = new Map<string, Mission>()
     for (const assignment of assignments.values()) {
       newAssignments.set(assignment.unit_id, {

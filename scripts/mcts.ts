@@ -17,7 +17,6 @@ async function main() {
   const gameState = deepClone(GameState, sim.getGameState())
   const mcts = new MonteCarlo()
   mcts.root = new TreeNode(gameState)
-
   MonteCarlo.expansion(mcts.root)
 
   const dot = mcts.renderGraphViz()

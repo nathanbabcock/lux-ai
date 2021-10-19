@@ -8,11 +8,11 @@ const agent = new Agent()
 const assignments = new Map<string, Mission>()
 
 async function main() {
-  clearLog()
-  log('==============')
-  log('Random Settler')
-  log('==============')
-  log(new Date().toLocaleString())
+  // clearLog()
+  // log('==============')
+  // log('Random Settler')
+  // log('==============')
+  // log(new Date().toLocaleString())
 
   agent.run(async gameState => {
     const player = gameState.players[gameState.id]
