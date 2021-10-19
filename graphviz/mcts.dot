@@ -1,0 +1,29 @@
+graph "" {
+  vwbZO [label="Turn 0\nroot\n"]
+  vwbZO -- VWRxV
+  VWRxV [label="Turn 0\nu_1 -> (0, 1)\n"]
+  vwbZO -- iCMKy
+  iCMKy [label="Turn 0\nu_1 -> (22, 0)\n"]
+  vwbZO -- yBbBU
+  yBbBU [label="Turn 0\nu_1 -> (8, 6)\n"]
+  vwbZO -- bMGnF
+  bMGnF [label="Turn 0\nu_1 -> (14, 5)\n"]
+  vwbZO -- fvpCH
+  fvpCH [label="Turn 0\nu_1 -> (1, 12)\n"]
+  vwbZO -- FArQT
+  FArQT [label="Turn 0\nu_1 -> (22, 12)\n"]
+  vwbZO -- TjATj
+  TjATj [label="Turn 0\nu_1 -> (8, 12)\n"]
+  vwbZO -- RfkKe
+  RfkKe [label="Turn 0\nu_1 -> (12, 11)\n"]
+  vwbZO -- HDkbb
+  HDkbb [label="Turn 0\nu_1 -> (9, 16)\n"]
+  vwbZO -- qPeOM
+  qPeOM [label="Turn 0\nu_1 -> (0, 19)\n"]
+  vwbZO -- GlMyt
+  GlMyt [label="Turn 0\nu_1 -> (22, 20)\n"]
+  vwbZO -- VTNqp
+  VTNqp [label="Turn 0\nu_1 -> (6, 22)\n"]
+  vwbZO -- tGVvX
+  tGVvX [label="Turn 0\nu_1 -> (16, 23)\n"]
+}

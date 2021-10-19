@@ -1,14 +1,21 @@
 import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { Position } from '../lux/Position'
-import { Unit } from '../lux/Unit'
-import Cluster, { getClusters } from './Cluster'
+import { getClusters } from './Cluster'
+import uuid from './uuid'
 
 export type SimpleAssignment = {unit: string, cluster: number}
 export type SimpleAssignments = SimpleAssignment[]
 
 export default class MonteCarlo {
   root: TreeNode
+
+  static renderGraphViz(node: TreeNode) {
+    let result = 'graph "" {\n'
+    result += node.render()
+    result += '}\n'
+    return result
+  }
 
   static generateAssignmentsSimple(units: string[], clusters: number[]) {
     const assignments: SimpleAssignments[] = []
@@ -31,30 +38,6 @@ export default class MonteCarlo {
     }
     return assignments
   }
-
-  static generateAssignmentsWrong(units: string[], clusters: number[]) {
-    const assignments: SimpleAssignments[] = []
-    for (let i = 0; i < units.length; i++) {
-      const unit = units[i]
-      for (const cluster of clusters) {
-        const newAssignment = {unit, cluster}
-        // if (units.length === 1) {
-        //   assignments.push([newAssignment])
-        // }
-
-        const remainingAssignments = MonteCarlo.generateAssignmentsSimple(
-          units.slice(i + 1),
-          clusters
-        )
-
-        remainingAssignments.forEach(assignment => {
-          assignments.push([newAssignment, ...assignment])
-        })
-      }
-    }
-    return assignments
-  }
-
 }
 
 export class TreeNode {
@@ -76,22 +59,32 @@ export class TreeNode {
     if (assignments) this.assignments = assignments
   }
 
-  /** Get all possible assignments for one unit */
-  generateAssignments(units: Unit[], clusters: Cluster[]): SettlerMission[][] {
-    const assignments: Mission[][] = []
+  /**
+   * Expansion phase of MCTS.
+   * 
+   * Generates and initializes all children of this node.
+   */
+  expand() {
     const map = this.gameState.map
+    const units = this.gameState.players[this.player].units
+    const unassigned = units.filter(unit => !this.assignments.has(unit.id))
+    const clusters = getClusters(map)
+    const assignments = MonteCarlo.generateAssignmentsSimple(
+      unassigned.map(unit => unit.id),
+      clusters.map((_, index) => index)
+    )
+    assignments.forEach(assignment => {
+      const assignmentMap = new Map<string, Mission>()
+      const child = new TreeNode(this.gameState, assignmentMap)
 
-    if (units.length === 0) return []
+      assignment.forEach(unitAssignment => {
+        const unit_id = unitAssignment.unit
+        const cluster = clusters[unitAssignment.cluster]
+        const unit = units.find(unit => unit.id === unit_id)
 
-    for (let i = 0; i < units.length; i++) {
-      const unit = units[i]
-      let cluster_id = 0
-      for (const cluster of clusters) {
-        cluster_id++
-        const perimeter = cluster.getPerimeter(map)
-        if (perimeter.length === 0) continue
         let closestDist = Infinity
         let closest: Cell = undefined
+        const perimeter = cluster.getPerimeter(map)
         for (const cell of perimeter) {
           const dist = cell.pos.distanceTo(unit.pos)
           if (dist < closestDist) {
@@ -99,43 +92,48 @@ export class TreeNode {
             closest = cell
           }
         }
-        if (!closest) continue
+        if (!closest) return
 
-        const thisAssignment: SettlerMission = {
-          unit_id: unit.id,
+        const mission = {
+          unit_id,
           city_pos: closest.pos,
-          cluster_id: cluster_id,
         }
 
-        const remainingAssignments = this.generateAssignments(
-          units.slice(i + 1),
-          clusters,
-        )
-
-        if (remainingAssignments.length === 0 && units.length === 1)
-          assignments.push([thisAssignment])
-
-        remainingAssignments.forEach(otherAssignments => {
-          assignments.push([
-            thisAssignment,
-            ...otherAssignments,
-          ])
-        })
-      }
-    }
-
-    return assignments
+        assignmentMap.set(unit_id, mission)
+      })
+      this.addChild(child)
+    })
   }
 
-  getAllPossibleAssignments(): SettlerMission[][] {
-    const map = this.gameState.map
-    const units = this.gameState.players[this.player].units
-    console.log(`Units: ${units.length}`)
-    const unassigned = units.filter(unit => !this.assignments.has(unit.id))
-    console.log(`Unassigned: ${unassigned.length}`)
-    const clusters = getClusters(map)
-    console.log(`Clusters: ${clusters.length}`)
-    return this.generateAssignments(unassigned, clusters)
+  printAssignments(): string {
+    let result = ''
+    for (const val of this.assignments.values())
+      result += `${val.unit_id} -> (${val.city_pos.x}, ${val.city_pos.y})\\n`
+    return result    
+  }
+
+  /** Recursively renders this node and all its children to a partial DOT graphviz representation */
+  render(parent_uuid?: string) {
+    let result = ''
+    if (!parent_uuid) parent_uuid = uuid()
+
+    let label = ''
+    if (this.gameState)
+      label += `Turn ${this.gameState.turn}\\n`
+    if (!this.parent)
+      label += 'root\\n'
+    if (this.assignments)
+      label += this.printAssignments()
+
+    result += `  ${parent_uuid} [label="${label}"]\n`
+
+    this.children.forEach(child => {
+      const child_uuid = uuid()
+      result += `  ${parent_uuid} -- ${child_uuid}\n`
+      result += child.render(child_uuid)
+    })
+
+    return result
   }
 
   addChild(child: TreeNode) {
