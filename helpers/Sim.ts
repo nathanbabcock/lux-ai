@@ -116,15 +116,24 @@ export default class Sim {
   }
 
   async action(actions: string | string[]): Promise<SimState> {
+    const commands = Sim.actionsToCommands(actions, this.playerID)
+    return await this.command(commands)
+  }
+
+  async command(commands: MatchEngine.Command[]): Promise<SimState> {
+    await LuxDesignLogic.update(this.match, commands)
+    this.stats.turns++
+    return this.getSimState()
+  }
+
+  static actionsToCommands(actions: string | string[], playerID: number): MatchEngine.Command[] {
     if (!(actions instanceof Array))
       actions = [actions]
     const commands: MatchEngine.Command[] = actions.map(action => ({
       command: action,
-      agentID: this.playerID,
+      agentID: playerID,
     }))
-    await LuxDesignLogic.update(this.match, commands)
-    this.stats.turns++
-    return this.getSimState()
+    return commands
   }
 
   async turn(

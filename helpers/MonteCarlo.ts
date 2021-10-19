@@ -8,7 +8,7 @@ import { Unit } from '../lux/Unit'
 import Cluster, { getClusters } from './Cluster'
 import Convert from './Convert'
 import Sim from './Sim'
-import { chooseRandom } from './util'
+import { chooseRandom, deepClone } from './util'
 import uuid from './uuid'
 
 export type SimpleAssignment = {unit: string, cluster: number}
@@ -17,12 +17,123 @@ export type SimpleAssignments = SimpleAssignment[]
 export default class MonteCarlo {
   root: TreeNode
 
-  static renderGraphViz(node: TreeNode) {
+  renderGraphViz() {
     let result = 'graph {\n'
     result += `  node [shape=circle fontname="CMU Serif"]\n`
-    result += node.render()
+    result += this.root.render()
     result += '}\n'
     return result
+  }
+
+  /**
+   * Runs a single full four-phase iteration of MCTS:
+   * - Selection
+   * - Expansion
+   * - Simulation
+   * - Backpropagation
+   */
+  iteration() {
+    // TODO
+  }
+
+ /**
+   * Expansion phase of MCTS.
+   * 
+   * Generates and initializes all children of this node.
+   */
+  static expansion(node: TreeNode) {
+    const map = node.gameState.map
+    const units = node.gameState.players[node.player].units
+    const unassigned = units.filter(unit => !node.assignments.has(unit.id))
+    const clusters = getClusters(map)
+    const assignments = MonteCarlo.generateAssignmentsSimple(
+      unassigned.map(unit => unit.id),
+      clusters.map((_, index) => index)
+    )
+    assignments.forEach(assignment => {
+      const assignmentMap = new Map<string, Mission>()
+      const child = new TreeNode(node.gameState, assignmentMap)
+
+      assignment.forEach(unitAssignment => {
+        const unit_id = unitAssignment.unit
+        const cluster = clusters[unitAssignment.cluster]
+        const unit = units.find(unit => unit.id === unit_id)
+        const mission = MonteCarlo.generateSpecificSettlerMissionForUnit(unit, cluster, map)
+        assignmentMap.set(unit_id, mission)
+      })
+      node.addChild(child)
+    })
+  }
+
+  /**
+   * Simulation phase of MCTS.
+   * 
+   * Full playout starting from current node through the end of the game,
+   * with the given assignments and gamestate as a starting point,
+   * choosing randomly for all subsequent decisions.
+   */
+  static async simulation(sim: Sim, node: TreeNode): Promise<0 | 0.5 | 1> {
+    if (!node.gameState)
+      console.warn('Simulate called without a starting gameState')
+
+    const serializedState = Convert.toSerializedState(node.gameState)
+    sim.reset(serializedState)
+
+    const curAssignments = MonteCarlo.copyAssignments(node.assignments)
+    node.assignmentsToString()
+
+    const curGameState = deepClone(GameState, node.gameState)
+    while (!LuxDesignLogic.matchOver(sim.match)) {
+      curGameState.players.forEach(player => {
+        player.units.forEach(unit => {
+          const mission = curAssignments.get(unit.id)
+          if (mission && curGameState.map.getCellByPos(mission.city_pos).citytile)
+            curAssignments.delete(unit.id)
+
+          if (!curAssignments.has(unit.id)) {
+            const possibleAssignments = MonteCarlo.generateAllUnitMissions(unit, curGameState.map)
+            curAssignments.set(unit.id, chooseRandom(possibleAssignments))
+          }
+        })
+      })
+
+      const player_id = curGameState.id
+      const player = curGameState.players[player_id]
+      const player_actions = SettlerAgent.turn(curGameState, player, curAssignments)
+      
+      const opponent_id = (player_id + 1) % 2
+      const opponent = curGameState.players[opponent_id]
+      const opponent_actions = SettlerAgent.turn(curGameState, opponent, curAssignments)
+      
+      const commands = [
+        ...Sim.actionsToCommands(player_actions, player_id),
+        ...Sim.actionsToCommands(opponent_actions, opponent_id)
+      ]
+      await sim.command(commands)
+
+      Convert.updateGameState(curGameState, sim.getGame())
+    }
+
+    const results = LuxDesignLogic.getResults(sim.match)
+    const tie = results.ranks[0].rank === results.ranks[1].rank
+    if (tie)
+      return 0.5
+    if (results.ranks[0].agentID === node.gameState.id)
+      return 1
+    else
+      return 0
+  }
+
+  static backPropagation(node: TreeNode, value: 0 | 0.5 | 1) {
+    node.plays++
+    node.wins += value
+    if (!node.parent) return
+    MonteCarlo.backPropagation(node.parent, value)
+  }
+
+  static async simAndBackProp(sim: Sim, node: TreeNode) {
+    const value = await MonteCarlo.simulation(sim, node)
+    MonteCarlo.backPropagation(node, value)
   }
 
   static generateAssignmentsSimple(units: string[], clusters: number[]) {
@@ -107,81 +218,7 @@ export class TreeNode {
     if (assignments) this.assignments = assignments
   }
 
-  /**
-   * Expansion phase of MCTS.
-   * 
-   * Generates and initializes all children of this node.
-   */
-  expand() {
-    const map = this.gameState.map
-    const units = this.gameState.players[this.player].units
-    const unassigned = units.filter(unit => !this.assignments.has(unit.id))
-    const clusters = getClusters(map)
-    const assignments = MonteCarlo.generateAssignmentsSimple(
-      unassigned.map(unit => unit.id),
-      clusters.map((_, index) => index)
-    )
-    assignments.forEach(assignment => {
-      const assignmentMap = new Map<string, Mission>()
-      const child = new TreeNode(this.gameState, assignmentMap)
-
-      assignment.forEach(unitAssignment => {
-        const unit_id = unitAssignment.unit
-        const cluster = clusters[unitAssignment.cluster]
-        const unit = units.find(unit => unit.id === unit_id)
-        const mission = MonteCarlo.generateSpecificSettlerMissionForUnit(unit, cluster, map)
-        assignmentMap.set(unit_id, mission)
-      })
-      this.addChild(child)
-    })
-  }
-
-  /**
-   * Simulation phase of MCTS.
-   * 
-   * Advances the current node through the end of the game,
-   * with the given assignments and gamestate as a starting point,
-   * choosing randomly for all subsequent decisions.
-   */
-  async simulate(sim: Sim): Promise<0 | 0.5 | 1> {
-    if (!this.gameState)
-      console.warn('Simulate called without a starting gameState')
-
-    const serializedState = Convert.toSerializedState(this.gameState)
-    sim.reset(serializedState)
-
-    const curAssignments = MonteCarlo.copyAssignments(this.assignments)
-    const curGameState = this.gameState
-    while (!LuxDesignLogic.matchOver(sim.match)) {
-      curGameState.players.forEach(player => {
-        player.units.forEach(unit => {
-          const mission = curAssignments.get(unit.id)
-          if (mission && curGameState.map.getCellByPos(mission.city_pos).citytile)
-            curAssignments.delete(unit.id)
-
-          if (!curAssignments.has(unit.id)) {
-            const possibleAssignments = MonteCarlo.generateAllUnitMissions(unit, curGameState.map)
-            curAssignments.set(unit.id, chooseRandom(possibleAssignments))
-          }
-        })
-      })
-
-      const actions = SettlerAgent.turn(curGameState, curAssignments)
-      await sim.action(actions)
-      Convert.updateGameState(curGameState, sim.getGame())
-    }
-
-    const results = LuxDesignLogic.getResults(sim.match)
-    const tie = results.ranks[0].score === results.ranks[1].score
-    if (tie)
-      return 0.5
-    if (results.ranks[0].agentID === this.gameState.id)
-      return 1
-    else
-      return 0
-  }
-
-  printAssignments(): string {
+  assignmentsToString(): string {
     let result = ''
     for (const val of this.assignments.values())
       result += `${val.unit_id}: (${val.city_pos.x}, ${val.city_pos.y})<br/>`
@@ -199,7 +236,7 @@ export class TreeNode {
     if (!this.parent)
       label += 'root\<br/>'
     if (this.assignments)
-      label += this.printAssignments()
+      label += this.assignmentsToString()
     label += `<b>${this.wins}/${this.plays}</b>`
 
     result += `  ${parent_uuid} [label=<${label}>]\n`

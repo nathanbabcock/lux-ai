@@ -29,7 +29,7 @@ async function main() {
       }
     })
 
-    const actions = SettlerAgent.turn(gameState, assignments)
+    const actions = SettlerAgent.turn(gameState, player, assignments)
     return actions
   })
 }

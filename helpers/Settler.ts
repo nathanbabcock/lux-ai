@@ -20,11 +20,11 @@ export default class SettlerAgent {
 
   static updateUnits(
     gameState: GameState,
+    player: Player,
     assignments: Map<string, Mission>,
     otherUnitMoves: Position[],
     actions: string[]
   ) {
-    const player = gameState.players[gameState.id]
     for (const unit of player.units) {
       const mission = assignments.get(unit.id)
       const destination = mission.city_pos
@@ -47,13 +47,13 @@ export default class SettlerAgent {
 
   static turn(
     gameState: GameState,
+    player: Player,
     assignments: Map<string, Mission>,
   ): string[] {
     const actions: string[] = []
-    const player = gameState.players[gameState.id]
     const otherUnitMoves: Position[] = []
     SettlerAgent.updateCities(player, actions)
-    SettlerAgent.updateUnits(gameState, assignments, otherUnitMoves, actions)
+    SettlerAgent.updateUnits(gameState, player, assignments, otherUnitMoves, actions)
     return actions
   }
 }

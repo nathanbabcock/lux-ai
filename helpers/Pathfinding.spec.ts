@@ -60,12 +60,12 @@ describe(`Simulation-driven pathfinding w/ 'turns' heuristic`, () => {
     const gameState = sim.getGameState()
     const unit = gameState.players[0].units[0]
 
-    const path = await Pathfinding.astar_build(unit, gameState, sim)
+    const result = await Pathfinding.astar_build(unit, gameState, sim)
 
-    expect(path).not.toBeNull()
-    expect(path.length).toBe(6)
+    expect(result).not.toBeNull()
+    expect(result.path.length).toBe(6)
 
-    const actions = path.map(node => node.action).filter(action => !!action)
+    const actions = result.path.map(node => node.action).filter(action => !!action)
     for (const action of actions)
       await replaySim.action(action)
 
