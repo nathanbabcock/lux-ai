@@ -108,6 +108,17 @@ export function moveWithCollisionAvoidance(gameState: GameState, unit: Unit, dir
   }
 }
 
+export function buildCityWithCollisionAvoidance(gameState: GameState, unit: Unit, city_pos: Position, actions: Array<string>, otherUnitMoves: Array<Position>) {
+  const player = gameState.players[gameState.id]
+
+  if (unit.pos.distanceTo(city_pos) === 0) {
+    actions.push(unit.buildCity())
+  } else {
+    const dir = unit.pos.directionTo(city_pos)
+    moveWithCollisionAvoidance(gameState, unit, dir, otherUnitMoves, actions)
+  }
+}
+
 export function sidestep(unit: Unit, dir: string, otherUnitMoves: Array<Position>, actions: Array<string>): boolean {
   // Move perpendicular if you're blocked
   const alternatives = getPerpendicularDirections(dir)

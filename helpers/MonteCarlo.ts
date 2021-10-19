@@ -1,7 +1,14 @@
+import { LuxDesignLogic } from '@lux-ai/2021-challenge'
+import SettlerAgent from './Settler'
 import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
+import { GameMap } from '../lux/GameMap'
 import { Position } from '../lux/Position'
-import { getClusters } from './Cluster'
+import { Unit } from '../lux/Unit'
+import Cluster, { getClusters } from './Cluster'
+import Convert from './Convert'
+import Sim from './Sim'
+import { chooseRandom } from './util'
 import uuid from './uuid'
 
 export type SimpleAssignment = {unit: string, cluster: number}
@@ -38,6 +45,46 @@ export default class MonteCarlo {
       )
     }
     return assignments
+  }
+
+  static generateSpecificSettlerMissionForUnit(unit: Unit, cluster: Cluster, map: GameMap): SettlerMission {
+    const unit_id = unit.id
+    let closestDist = Infinity
+    let closest: Cell = undefined
+    const perimeter = cluster.getPerimeter(map)
+    for (const cell of perimeter) {
+      const dist = cell.pos.distanceTo(unit.pos)
+      if (dist < closestDist) {
+        closestDist = dist
+        closest = cell
+      }
+    }
+    if (!closest) return
+
+    const mission = {
+      unit_id,
+      city_pos: closest.pos,
+    }
+
+    return mission
+  }
+
+  static generateAllUnitMissions(unit: Unit, map: GameMap): Mission[] {
+    const clusters = getClusters(map)
+    const missions = clusters.map(cluster => MonteCarlo.generateSpecificSettlerMissionForUnit(unit, cluster, map))
+    return missions
+  }
+
+  /** Deep clone of an assignment map, with new internal Mission and Position objects */
+  static copyAssignments(assignments: Map<string, Mission>): Map<string, Mission> {
+    const newAssignments = new Map<string, Mission>()
+    for (const assignment of assignments.values()) {
+      newAssignments.set(assignment.unit_id, {
+        unit_id: assignment.unit_id,
+        city_pos: new Position(assignment.city_pos.x, assignment.city_pos.y),
+      })
+    }
+    return newAssignments
   }
 }
 
@@ -82,28 +129,56 @@ export class TreeNode {
         const unit_id = unitAssignment.unit
         const cluster = clusters[unitAssignment.cluster]
         const unit = units.find(unit => unit.id === unit_id)
-
-        let closestDist = Infinity
-        let closest: Cell = undefined
-        const perimeter = cluster.getPerimeter(map)
-        for (const cell of perimeter) {
-          const dist = cell.pos.distanceTo(unit.pos)
-          if (dist < closestDist) {
-            closestDist = dist
-            closest = cell
-          }
-        }
-        if (!closest) return
-
-        const mission = {
-          unit_id,
-          city_pos: closest.pos,
-        }
-
+        const mission = MonteCarlo.generateSpecificSettlerMissionForUnit(unit, cluster, map)
         assignmentMap.set(unit_id, mission)
       })
       this.addChild(child)
     })
+  }
+
+  /**
+   * Simulation phase of MCTS.
+   * 
+   * Advances the current node through the end of the game,
+   * with the given assignments and gamestate as a starting point,
+   * choosing randomly for all subsequent decisions.
+   */
+  async simulate(sim: Sim): Promise<0 | 0.5 | 1> {
+    if (!this.gameState)
+      console.warn('Simulate called without a starting gameState')
+
+    const serializedState = Convert.toSerializedState(this.gameState)
+    sim.reset(serializedState)
+
+    const curAssignments = MonteCarlo.copyAssignments(this.assignments)
+    const curGameState = this.gameState
+    while (!LuxDesignLogic.matchOver(sim.match)) {
+      curGameState.players.forEach(player => {
+        player.units.forEach(unit => {
+          const mission = curAssignments.get(unit.id)
+          if (mission && curGameState.map.getCellByPos(mission.city_pos).citytile)
+            curAssignments.delete(unit.id)
+
+          if (!curAssignments.has(unit.id)) {
+            const possibleAssignments = MonteCarlo.generateAllUnitMissions(unit, curGameState.map)
+            curAssignments.set(unit.id, chooseRandom(possibleAssignments))
+          }
+        })
+      })
+
+      const actions = SettlerAgent.turn(curGameState, curAssignments)
+      await sim.action(actions)
+      Convert.updateGameState(curGameState, sim.getGame())
+    }
+
+    const results = LuxDesignLogic.getResults(sim.match)
+    const tie = results.ranks[0].score === results.ranks[1].score
+    if (tie)
+      return 0.5
+    if (results.ranks[0].agentID === this.gameState.id)
+      return 1
+    else
+      return 0
   }
 
   printAssignments(): string {
