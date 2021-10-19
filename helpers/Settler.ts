@@ -27,6 +27,7 @@ export default class SettlerAgent {
   ) {
     for (const unit of player.units) {
       const mission = assignments.get(unit.id)
+      if (!mission) continue
       const destination = mission.city_pos
       actions.push(annotate.line(unit.pos.x, unit.pos.y, destination.x, destination.y))
       const resourceTiles = getResources(gameState.map)

@@ -8,7 +8,7 @@ async function main() {
   console.log('Hello world: Monte Carlo Tree Search')
 
   const sim = await Sim.create({
-    storeReplay: true,
+    storeReplay: false,
     statefulReplay: false,
     out: 'replays/mcts.json',
     debugAnnotations: true,
@@ -23,13 +23,14 @@ async function main() {
   const dot = mcts.renderGraphViz()
   writeFileSync('graphviz/before.dot', dot)
 
-  const N_PLAYOUTS = 1
+  const N_PLAYOUTS = 100
   const timerLabel = `Playout x ${N_PLAYOUTS}`
   console.time(timerLabel)
   for (let i = 0; i < N_PLAYOUTS; i++) {
     const child = chooseRandom(mcts.root.children)
-    console.log(`Selection = child node ${mcts.root.children.indexOf(child)}`)
+    console.log(`Playout #${i} (selection = child ${mcts.root.children.indexOf(child)})`)
     await MonteCarlo.simAndBackProp(sim, child)
+    // sim.saveReplay()
   }
   console.timeEnd(timerLabel)
 

@@ -1,30 +1,30 @@
 graph {
   node [shape=circle fontname="CMU Serif"]
-  LFMmV [label=<Turn 0<br/>root<br/><b>0/0</b>>]
-  LFMmV -- dATcI
-  dATcI [label=<Turn 0<br/>u_1: (0, 2)<br/><b>0/0</b>>]
-  LFMmV -- LnPVg
-  LnPVg [label=<Turn 0<br/>u_1: (5, 1)<br/><b>0/0</b>>]
-  LFMmV -- BMhOX
-  BMhOX [label=<Turn 0<br/>u_1: (14, 1)<br/><b>0/0</b>>]
-  LFMmV -- HbrwS
-  HbrwS [label=<Turn 0<br/>u_1: (1, 4)<br/><b>0/0</b>>]
-  LFMmV -- hPaLl
-  hPaLl [label=<Turn 0<br/>u_1: (13, 3)<br/><b>0/0</b>>]
-  LFMmV -- gUHCM
-  gUHCM [label=<Turn 0<br/>u_1: (2, 7)<br/><b>0/0</b>>]
-  LFMmV -- sAWJY
-  sAWJY [label=<Turn 0<br/>u_1: (11, 8)<br/><b>0/0</b>>]
-  LFMmV -- IQRBx
-  IQRBx [label=<Turn 0<br/>u_1: (1, 8)<br/><b>0/0</b>>]
-  LFMmV -- PWrSm
-  PWrSm [label=<Turn 0<br/>u_1: (14, 8)<br/><b>0/0</b>>]
-  LFMmV -- TrqAR
-  TrqAR [label=<Turn 0<br/>u_1: (3, 11)<br/><b>0/0</b>>]
-  LFMmV -- FrCbN
-  FrCbN [label=<Turn 0<br/>u_1: (8, 11)<br/><b>0/0</b>>]
-  LFMmV -- SsVtx
-  SsVtx [label=<Turn 0<br/>u_1: (1, 14)<br/><b>0/0</b>>]
-  LFMmV -- iRVRv
-  iRVRv [label=<Turn 0<br/>u_1: (13, 15)<br/><b>0/0</b>>]
+  mcBAb [label=<Turn 0<br/>root<br/><b>0/0</b>>]
+  mcBAb -- vzvvM
+  vzvvM [label=<Turn 0<br/>u_1: (0, 2)<br/><b>0/0</b>>]
+  mcBAb -- obOvj
+  obOvj [label=<Turn 0<br/>u_1: (5, 1)<br/><b>0/0</b>>]
+  mcBAb -- DmAvL
+  DmAvL [label=<Turn 0<br/>u_1: (14, 1)<br/><b>0/0</b>>]
+  mcBAb -- zqXnJ
+  zqXnJ [label=<Turn 0<br/>u_1: (1, 4)<br/><b>0/0</b>>]
+  mcBAb -- OEfoz
+  OEfoz [label=<Turn 0<br/>u_1: (13, 3)<br/><b>0/0</b>>]
+  mcBAb -- KiNTX
+  KiNTX [label=<Turn 0<br/>u_1: (2, 7)<br/><b>0/0</b>>]
+  mcBAb -- SKPNm
+  SKPNm [label=<Turn 0<br/>u_1: (11, 8)<br/><b>0/0</b>>]
+  mcBAb -- WDnNa
+  WDnNa [label=<Turn 0<br/>u_1: (1, 8)<br/><b>0/0</b>>]
+  mcBAb -- qpkDY
+  qpkDY [label=<Turn 0<br/>u_1: (14, 8)<br/><b>0/0</b>>]
+  mcBAb -- XpBbx
+  XpBbx [label=<Turn 0<br/>u_1: (3, 11)<br/><b>0/0</b>>]
+  mcBAb -- HkCOs
+  HkCOs [label=<Turn 0<br/>u_1: (8, 11)<br/><b>0/0</b>>]
+  mcBAb -- fWuXK
+  fWuXK [label=<Turn 0<br/>u_1: (1, 14)<br/><b>0/0</b>>]
+  mcBAb -- DWfea
+  DWfea [label=<Turn 0<br/>u_1: (13, 15)<br/><b>0/0</b>>]
 }

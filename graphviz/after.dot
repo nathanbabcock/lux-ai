@@ -1,30 +1,30 @@
 graph {
   node [shape=circle fontname="CMU Serif"]
-  tBjzm [label=<Turn 0<br/>root<br/><b>0/1</b>>]
-  tBjzm -- RjZht
-  RjZht [label=<Turn 0<br/>u_1: (0, 2)<br/><b>0/0</b>>]
-  tBjzm -- bWADG
-  bWADG [label=<Turn 0<br/>u_1: (5, 1)<br/><b>0/0</b>>]
-  tBjzm -- EzuGS
-  EzuGS [label=<Turn 0<br/>u_1: (14, 1)<br/><b>0/0</b>>]
-  tBjzm -- SFxfx
-  SFxfx [label=<Turn 0<br/>u_1: (1, 4)<br/><b>0/0</b>>]
-  tBjzm -- nKdHh
-  nKdHh [label=<Turn 0<br/>u_1: (13, 3)<br/><b>0/1</b>>]
-  tBjzm -- QoXgG
-  QoXgG [label=<Turn 0<br/>u_1: (2, 7)<br/><b>0/0</b>>]
-  tBjzm -- igexs
-  igexs [label=<Turn 0<br/>u_1: (11, 8)<br/><b>0/0</b>>]
-  tBjzm -- sTlPq
-  sTlPq [label=<Turn 0<br/>u_1: (1, 8)<br/><b>0/0</b>>]
-  tBjzm -- npZve
-  npZve [label=<Turn 0<br/>u_1: (14, 8)<br/><b>0/0</b>>]
-  tBjzm -- iVpeu
-  iVpeu [label=<Turn 0<br/>u_1: (3, 11)<br/><b>0/0</b>>]
-  tBjzm -- BygyE
-  BygyE [label=<Turn 0<br/>u_1: (8, 11)<br/><b>0/0</b>>]
-  tBjzm -- eVuYi
-  eVuYi [label=<Turn 0<br/>u_1: (1, 14)<br/><b>0/0</b>>]
-  tBjzm -- clEFm
-  clEFm [label=<Turn 0<br/>u_1: (13, 15)<br/><b>0/0</b>>]
+  AUgHU [label=<Turn 0<br/>root<br/><b>50/100</b>>]
+  AUgHU -- GmaNR
+  GmaNR [label=<Turn 0<br/>u_1: (0, 2)<br/><b>6/8</b>>]
+  AUgHU -- iSDKY
+  iSDKY [label=<Turn 0<br/>u_1: (5, 1)<br/><b>6.5/12</b>>]
+  AUgHU -- mJNbN
+  mJNbN [label=<Turn 0<br/>u_1: (14, 1)<br/><b>3/6</b>>]
+  AUgHU -- TGrCh
+  TGrCh [label=<Turn 0<br/>u_1: (1, 4)<br/><b>2/5</b>>]
+  AUgHU -- npMQJ
+  npMQJ [label=<Turn 0<br/>u_1: (13, 3)<br/><b>3.5/7</b>>]
+  AUgHU -- WYcRu
+  WYcRu [label=<Turn 0<br/>u_1: (2, 7)<br/><b>6.5/13</b>>]
+  AUgHU -- RkRcc
+  RkRcc [label=<Turn 0<br/>u_1: (11, 8)<br/><b>5.5/8</b>>]
+  AUgHU -- PTfNO
+  PTfNO [label=<Turn 0<br/>u_1: (1, 8)<br/><b>6/11</b>>]
+  AUgHU -- GuCNc
+  GuCNc [label=<Turn 0<br/>u_1: (14, 8)<br/><b>0/10</b>>]
+  AUgHU -- rIvYY
+  rIvYY [label=<Turn 0<br/>u_1: (3, 11)<br/><b>2/5</b>>]
+  AUgHU -- CzEoo
+  CzEoo [label=<Turn 0<br/>u_1: (8, 11)<br/><b>4/5</b>>]
+  AUgHU -- aLMZN
+  aLMZN [label=<Turn 0<br/>u_1: (1, 14)<br/><b>3/4</b>>]
+  AUgHU -- kahtN
+  kahtN [label=<Turn 0<br/>u_1: (13, 15)<br/><b>2/6</b>>]
 }
