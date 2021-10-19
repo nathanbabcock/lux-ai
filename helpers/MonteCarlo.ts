@@ -11,7 +11,8 @@ export default class MonteCarlo {
   root: TreeNode
 
   static renderGraphViz(node: TreeNode) {
-    let result = 'graph "" {\n'
+    let result = 'graph {\n'
+    result += `  node [shape=circle fontname="CMU Serif"]\n`
     result += node.render()
     result += '}\n'
     return result
@@ -126,7 +127,7 @@ export class TreeNode {
       label += this.printAssignments()
     label += `<b>${this.wins}/${this.plays}</b>`
 
-    result += `  ${parent_uuid} [label=<${label}> fontname="helvetica"]\n`
+    result += `  ${parent_uuid} [label=<${label}>]\n`
 
     this.children.forEach(child => {
       const child_uuid = uuid()
