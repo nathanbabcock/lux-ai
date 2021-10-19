@@ -1,30 +1,30 @@
 graph {
   node [shape=circle fontname="CMU Serif"]
-  mcBAb [label=<Turn 0<br/>root<br/><b>0/0</b>>]
-  mcBAb -- vzvvM
-  vzvvM [label=<Turn 0<br/>u_1: (0, 2)<br/><b>0/0</b>>]
-  mcBAb -- obOvj
-  obOvj [label=<Turn 0<br/>u_1: (5, 1)<br/><b>0/0</b>>]
-  mcBAb -- DmAvL
-  DmAvL [label=<Turn 0<br/>u_1: (14, 1)<br/><b>0/0</b>>]
-  mcBAb -- zqXnJ
-  zqXnJ [label=<Turn 0<br/>u_1: (1, 4)<br/><b>0/0</b>>]
-  mcBAb -- OEfoz
-  OEfoz [label=<Turn 0<br/>u_1: (13, 3)<br/><b>0/0</b>>]
-  mcBAb -- KiNTX
-  KiNTX [label=<Turn 0<br/>u_1: (2, 7)<br/><b>0/0</b>>]
-  mcBAb -- SKPNm
-  SKPNm [label=<Turn 0<br/>u_1: (11, 8)<br/><b>0/0</b>>]
-  mcBAb -- WDnNa
-  WDnNa [label=<Turn 0<br/>u_1: (1, 8)<br/><b>0/0</b>>]
-  mcBAb -- qpkDY
-  qpkDY [label=<Turn 0<br/>u_1: (14, 8)<br/><b>0/0</b>>]
-  mcBAb -- XpBbx
-  XpBbx [label=<Turn 0<br/>u_1: (3, 11)<br/><b>0/0</b>>]
-  mcBAb -- HkCOs
-  HkCOs [label=<Turn 0<br/>u_1: (8, 11)<br/><b>0/0</b>>]
-  mcBAb -- fWuXK
-  fWuXK [label=<Turn 0<br/>u_1: (1, 14)<br/><b>0/0</b>>]
-  mcBAb -- DWfea
-  DWfea [label=<Turn 0<br/>u_1: (13, 15)<br/><b>0/0</b>>]
+  iUXBF [label=<Turn 0<br/>root<br/><b>0/0</b>>]
+  iUXBF -- Buvqn
+  Buvqn [label=<Turn 0<br/>u_1: (0, 2)<br/><b>0/0</b>>]
+  iUXBF -- tmFFD
+  tmFFD [label=<Turn 0<br/>u_1: (5, 1)<br/><b>0/0</b>>]
+  iUXBF -- zQTfy
+  zQTfy [label=<Turn 0<br/>u_1: (14, 1)<br/><b>0/0</b>>]
+  iUXBF -- HOvLA
+  HOvLA [label=<Turn 0<br/>u_1: (1, 4)<br/><b>0/0</b>>]
+  iUXBF -- QykHK
+  QykHK [label=<Turn 0<br/>u_1: (13, 3)<br/><b>0/0</b>>]
+  iUXBF -- dKkYV
+  dKkYV [label=<Turn 0<br/>u_1: (2, 7)<br/><b>0/0</b>>]
+  iUXBF -- ZGyON
+  ZGyON [label=<Turn 0<br/>u_1: (11, 8)<br/><b>0/0</b>>]
+  iUXBF -- LaYWI
+  LaYWI [label=<Turn 0<br/>u_1: (1, 8)<br/><b>0/0</b>>]
+  iUXBF -- uhSqP
+  uhSqP [label=<Turn 0<br/>u_1: (14, 8)<br/><b>0/0</b>>]
+  iUXBF -- pjnWe
+  pjnWe [label=<Turn 0<br/>u_1: (3, 11)<br/><b>0/0</b>>]
+  iUXBF -- DRcTb
+  DRcTb [label=<Turn 0<br/>u_1: (8, 11)<br/><b>0/0</b>>]
+  iUXBF -- VKNVG
+  VKNVG [label=<Turn 0<br/>u_1: (1, 14)<br/><b>0/0</b>>]
+  iUXBF -- lIwCt
+  lIwCt [label=<Turn 0<br/>u_1: (13, 15)<br/><b>0/0</b>>]
 }

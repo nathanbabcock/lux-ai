@@ -38,7 +38,7 @@ async function main() {
       MonteCarlo.expansion(mcts.root)
 
       if (mcts.root.children.length > 0) {
-        const TIME_BUDGET = 1500
+        const TIME_BUDGET = 1000
         let num_playouts = 0
         let now = new Date().getTime()
         while ((now = new Date().getTime()) - start < TIME_BUDGET) {

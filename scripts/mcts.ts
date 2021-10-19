@@ -22,7 +22,7 @@ async function main() {
   const dot = mcts.renderGraphViz()
   writeFileSync('graphviz/before.dot', dot)
 
-  const N_PLAYOUTS = 100
+  const N_PLAYOUTS = 10000
   const timerLabel = `Playout x ${N_PLAYOUTS}`
   console.time(timerLabel)
   for (let i = 0; i < N_PLAYOUTS; i++) {
