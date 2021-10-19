@@ -1,5 +1,5 @@
 digraph L {
-  a  [label="one\ltwo three\lfour five six seven\l"]
+  a  [label=<one\ltwo three<br/>four five <b>six</b> seven\l>]
   b  [label="one\ntwo three\nfour five six seven"]
   c  [label="one\rtwo three\rfour five six seven\r"]
 

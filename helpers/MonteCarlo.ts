@@ -108,7 +108,7 @@ export class TreeNode {
   printAssignments(): string {
     let result = ''
     for (const val of this.assignments.values())
-      result += `${val.unit_id} -> (${val.city_pos.x}, ${val.city_pos.y})\\n`
+      result += `${val.unit_id}: (${val.city_pos.x}, ${val.city_pos.y})<br/>`
     return result    
   }
 
@@ -119,13 +119,14 @@ export class TreeNode {
 
     let label = ''
     if (this.gameState)
-      label += `Turn ${this.gameState.turn}\\n`
+      label += `Turn ${this.gameState.turn}<br/>`
     if (!this.parent)
-      label += 'root\\n'
+      label += 'root\<br/>'
     if (this.assignments)
       label += this.printAssignments()
+    label += `<b>${this.wins}/${this.plays}</b>`
 
-    result += `  ${parent_uuid} [label="${label}"]\n`
+    result += `  ${parent_uuid} [label=<${label}> fontname="helvetica"]\n`
 
     this.children.forEach(child => {
       const child_uuid = uuid()
