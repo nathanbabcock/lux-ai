@@ -9,6 +9,7 @@
     "path-test": "node dist/scripts/path-test.js",
     "build": "tsc",
     "watch": "tsc -w",
+    "w": "npm run watch",
     "sim": "lux-ai-2021 --storeLogs=false --statefulReplay --out=replays/replay.json dist/agents/monte-carlo-settler.js dist/agents/random-settler.js",
     "vis": "lux-ai-vis replays/replay.json",
     "sim-vis": "npm run sim && npm run vis",
