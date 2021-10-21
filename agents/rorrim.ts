@@ -1,7 +1,10 @@
 import { clearLog, log } from '../helpers/logging'
-import { Agent, annotate } from '../lux/Agent'
+import { Agent, annotate, GameState } from '../lux/Agent'
 import { Position } from '../lux/Position'
 import GAME_CONSTANTS from '../lux/game_constants.json'
+import { Unit } from '../lux/Unit'
+import { isNight } from '../helpers/Abstraction'
+import { getNeighbors, getResourceAdjacency } from '../helpers/helpers'
 
 export type MirrorAxis = 'x' | 'y'
 
@@ -17,6 +20,29 @@ const birthAssignments: {
 function getMirrorPos(pos: Position, mirrorAxis: MirrorAxis, mapSize: number): Position {
   if (mirrorAxis === 'x') return new Position(pos.x, mapSize / 2 - (pos.y - mapSize / 2) - 1)
   else return new Position(mapSize / 2 - (pos.x - mapSize / 2) - 1, pos.y)
+}
+
+function tacticalSuicide(unit: Unit, gameState: GameState): string | undefined {
+    if (!isNight(gameState.turn)) {
+      log(`Suicide is a nighttime activity`)
+      return undefined
+    }
+
+    // For now, try moving into no-man's-land
+    const map = gameState.map
+    const cell = map.getCellByPos(unit.pos)
+    const neighbors = getNeighbors(cell, map)
+    for (const neighbor of neighbors) {
+      if (neighbor.citytile) return
+      const resourceAdjacency = getResourceAdjacency(neighbor, map)
+      if (resourceAdjacency > 0) continue
+      return unit.move(unit.pos.directionTo(neighbor.pos))
+    }
+
+    // TODO also try moving into a city which will die next turn
+    // TODO avoid inconveniencing others via your suicide, which can have an unpleasant ripple effect
+
+    return undefined
 }
 
 const agent = new Agent()
@@ -63,6 +89,10 @@ async function main() {
       if (!mirrorUnit) {
         actions.push(annotate.sidetext(`Mirror unit for ${unit.id} not found`))
         log(`Mirror unit for ${unit.id} not found`)
+        log(`Tactical suicide initiated`)
+        const kms = tacticalSuicide(unit, gameState)
+        if (kms) actions.push(kms)
+        else log(`Suicide attempt failed`)
         continue
       } else {
         actions.push(annotate.line(unit.pos.x, unit.pos.y,mirrorUnit.pos.x, mirrorUnit.pos.y))
