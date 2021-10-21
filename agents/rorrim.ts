@@ -5,10 +5,12 @@ import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Unit } from '../lux/Unit'
 import { isNight } from '../helpers/Abstraction'
 import { getNeighbors, getResourceAdjacency } from '../helpers/helpers'
+import { deepClone } from '../helpers/util'
 
 export type MirrorAxis = 'x' | 'y'
 
 let mirrorAxis: MirrorAxis
+let previousGameState: GameState
 const unitMirrors = new Map<string, string>()
 
 /** Assign a unit to a mirror based on where they were spawned */
@@ -72,6 +74,9 @@ async function main() {
       unitMirrors.set(player.units[0].id, opponent.units[0].id)
 
       log(`Identified mirror axis = ${mirrorAxis}`)
+
+      previousGameState = deepClone(GameState, gameState)
+      return []
     }
 
     for (const unit of player.units) {
@@ -90,13 +95,15 @@ async function main() {
         actions.push(annotate.sidetext(`Mirror unit for ${unit.id} not found`))
         log(`Mirror unit for ${unit.id} not found`)
         log(`Tactical suicide initiated`)
+        actions.push(annotate.circle(unit.pos.x, unit.pos.y))
         const kms = tacticalSuicide(unit, gameState)
         if (kms) actions.push(kms)
         else log(`Suicide attempt failed`)
         continue
-      } else {
-        actions.push(annotate.line(unit.pos.x, unit.pos.y,mirrorUnit.pos.x, mirrorUnit.pos.y))
       }
+      // else {
+      //   actions.push(annotate.line(unit.pos.x, unit.pos.y,mirrorUnit.pos.x, mirrorUnit.pos.y))
+      // }
 
       // If there's a city under an opposing mirrored unit, build one
       const cell = map.getCellByPos(unit.pos)
@@ -114,26 +121,50 @@ async function main() {
       }
     }
 
+    // TODO: convert this detect specific citytile actions
+    // 1. Check if citytile.cooldown increased from lastTurn.citytile.cooldown
+    // 2. If so, check if there's a new unit we don't have a mapping for
+    // 2.a. If there's a new unit, spawn a corresponding one (our citytile cooldown will always stay exactly one turn behind the mirrored city, or less)
+    // 2.b. If there's no unit there, it was a research action (so do that)
     const citytiles = Array.from(player.cities.values()).flatMap(c => c.citytiles)
     for (const citytile of citytiles) {
       if (!citytile.canAct()) continue
 
       const mirrorPos = getMirrorPos(citytile.pos, mirrorAxis, map.width)
       const mirrorCell = map.getCellByPos(mirrorPos)
-      if (!mirrorCell.citytile) continue
-
-      const newUnit = opponent.units.find(unit => unit.pos.equals(mirrorPos) && !Array.from(unitMirrors.values()).find(id => id === unit.id))
-      if (!newUnit) {
-        actions.push(citytile.research())
+      const mirrorCityTile = mirrorCell.citytile
+      if (!mirrorCityTile) {
+        actions.push(annotate.circle(citytile.pos.x, citytile.pos.y))
+        log(`Mirrored city (owned by opponent) seems to have died`)
         continue
       }
 
-      if (newUnit.type === GAME_CONSTANTS.UNIT_TYPES.WORKER)
-        actions.push(citytile.buildWorker())
-      else 
-        actions.push(citytile.buildCart())
-      birthAssignments.push({ pos: citytile.pos, mirror: newUnit.id })
+      const previousMirrorCityTile = previousGameState.map.getCellByPos(mirrorPos).citytile
+      if (!previousMirrorCityTile) {
+        log(`No history of mirrored city (owned by opponent)`)
+        continue
+      }
+
+      if (mirrorCityTile.cooldown > previousMirrorCityTile.cooldown) {
+        // The mirror citytile did something last turn 🤔
+        // Let's find out what it is
+
+        const newUnit = opponent.units.find(unit => unit.pos.equals(mirrorPos) && !Array.from(unitMirrors.values()).find(id => id === unit.id))
+        if (!newUnit) {
+          // No new unit? Must have been research. Let's do that.
+          actions.push(citytile.research())
+          continue
+        }
+
+        if (newUnit.type === GAME_CONSTANTS.UNIT_TYPES.WORKER)
+          actions.push(citytile.buildWorker())
+        else 
+          actions.push(citytile.buildCart())
+        birthAssignments.push({ pos: citytile.pos, mirror: newUnit.id })
+      }
     }
+
+    previousGameState = deepClone(GameState, gameState)
     return actions
   })
 }
