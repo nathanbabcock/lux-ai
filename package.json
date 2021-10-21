@@ -10,7 +10,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "w": "npm run watch",
-    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay --out=replays/replay.json dist/agents/monte-carlo-settler.js dist/agents/random-settler.js",
+    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay --out=replays/replay.json dist/agents/rorrim.js dist/agents/naive-collision-avoidance.js",
     "vis": "lux-ai-vis replays/replay.json",
     "sim-vis": "npm run sim && npm run vis",
     "tournament": "lux-ai-2021 --storeLogs=false --storeReplay=false --rankSystem=wins --tournament dist/agents/tree-search.js dist/agents/director-expander.js",
