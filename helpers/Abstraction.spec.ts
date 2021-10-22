@@ -1,5 +1,5 @@
 import { Position } from '@lux-ai/2021-challenge'
-import Abstraction from './Abstraction'
+import Abstraction, { UnitLocalState } from './Abstraction'
 import { initSeed } from './test-util'
 
 describe('Abstraction', () => {
@@ -17,11 +17,19 @@ describe('Abstraction', () => {
     expect(game.state.turn).toBe(0)
     expect(getNewCity()).toBeUndefined()
 
-    Abstraction.simulateBuildingCity(newCityPos, team, game)
+    const unit = Array.from(game.state.teamStates[team].units.values())[0]
+
+    const unitState: UnitLocalState = {
+      id: unit.id,
+      team: team,
+      pos: unit.pos,
+      turn: game.state.turn,
+    }
+    
+    const newUnitState = Abstraction.simulateBuildingCity(newCityPos, unitState, game)
 
     expect(game.state.turn).toBeGreaterThan(0)
     expect(getNewCity()).toBeDefined()
-
-    console.log(game.state.turn)
+    expect(newUnitState.turn).toBeGreaterThan(unitState.turn)
   })
 })

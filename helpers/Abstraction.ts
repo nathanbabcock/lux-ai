@@ -5,6 +5,21 @@ function distanceTo(position: Position, target: Position): number {
   return Math.abs(target.x - position.x) + Math.abs(target.y - position.y)
 }
 
+export type CityTreeNode = {
+  game: Game
+  
+  /** `∀ u ∈ units (u.turn <= game.turn)` */
+  units: UnitLocalState[]
+}
+
+/** Unit location in space *and time (!)* */
+export type UnitLocalState = {
+  id: string
+  team: 0 | 1
+  pos: Position
+  turn: number
+}
+
 /**
  * This class will hold simulation code for a
  * higher-level view of the gameplay, looking only
@@ -17,12 +32,16 @@ function distanceTo(position: Position, target: Position): number {
  * possibly in combination with RL for gamestate evaluation.
  */
 export default class Abstraction {
-  static simulateBuildingCity(cityPos: Position, team: 0 | 1, game: Game) {
-    const teamState = game.state.teamStates[team]
+  /**
+   * @param {Game} game modified in place (including `game.state.turn`, resources collected, and citytiles built)
+   * @returns a new {@link UnitLocalState} after this simulation
+   */
+  static simulateBuildingCity(cityPos: Position, unit: UnitLocalState, game: Game): UnitLocalState | undefined {
+    const teamState = game.state.teamStates[unit.team]
     const map = game.map
 
     const cityCell = map.getCellByPos(cityPos)
-    if (cityCell.citytile) return false
+    if (cityCell.citytile) return undefined
 
     const resources = map.resources
     let closestResource: Cell | undefined
@@ -37,22 +56,26 @@ export default class Abstraction {
       }
     }
 
-    if (!closestResource) return false
+    if (!closestResource) return undefined
 
-    let closestUnit: Unit = undefined
-    let closestUnitDist = Infinity
-    for (const unit of teamState.units.values()) {
-      const dist = distanceTo(unit.pos, closestResource.pos)
-      if (dist < closestUnitDist) {
-        closestUnit = unit
-        closestUnitDist = dist
-      }
-    }
-    if (!closestUnit) return false
-
-    game.state.turn += (closestResourceDist + closestUnitDist) * 2
+    const unitDist = distanceTo(unit.pos, closestResource.pos)
+    let turnCost = (unitDist + closestResourceDist) * 2
     closestResource.resource.amount = Math.max(closestResource.resource.amount - 100, 0)
-    game.spawnCityTile(team, cityPos.x, cityPos.y)
+    game.spawnCityTile(unit.team, cityPos.x, cityPos.y)
+
+    turnCost++
+    game.spawnWorker(unit.team, cityPos.x, cityPos.y)
+
+    const newUnit: UnitLocalState = {
+      pos: cityPos,
+      turn: unit.turn + turnCost,
+      team: unit.team,
+      id: unit.id,
+    }
+
+    game.state.turn = Math.max(game.state.turn, newUnit.turn)
+
+    return newUnit
   }
 }
 
