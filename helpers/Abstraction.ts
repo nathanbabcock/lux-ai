@@ -64,7 +64,10 @@ export class AbstractGameNode {
       // TODO should we instead choose which city to spawn the unit from?
       if (countCityTiles(earliestGame, earliestUnit.team) > this.units.length) {
         const worker = earliestGame.spawnWorker(earliestUnit.team, cityPos.x, cityPos.y)
-        earliestGame.state.turn = Math.max(earliestGame.state.turn, earliestUnit.turn + 1) // Take one more turn to spawn the worker
+
+        Abstraction.advanceGameToTurn(earliestGame, earliestUnit.turn + 1) // Take one more turn to spawn the worker
+        // earliestGame.state.turn = Math.max(earliestGame.state.turn, earliestUnit.turn + 1) 
+        
         const newUnit: UnitLocalState = {
           pos: worker.pos,
           turn: earliestUnit.turn + 1,
@@ -156,8 +159,50 @@ export default class Abstraction {
       id: unit.id,
     }
     
-    game.state.turn = Math.max(game.state.turn, unit.turn + turnCost)
+    Abstraction.advanceGameToTurn(game, unit.turn + turnCost)
     return updatedUnit
+  }
+
+  
+  /**
+   * Handles updating a gamestate to skip ahead ("time-travel") to some future turn.
+   * 
+   * Currently handles ONLY:
+   * - City light upkeep and destruction
+   * 
+   * Ignored or not handled:
+   * - Unit upkeep and death
+   * - Cooldowns
+   * - Variance in resource levels or upkeep requirement during a single invocation
+   *   (since the whole point is to batch it and get a rough estimate)
+   * 
+   * Possible future TODO:
+   * - Tree regrowth
+   * 
+   * @source F:\git\Lux-Design-2021\src\logic.ts:461
+   * @param game 
+   * @param turn 
+   */
+   static advanceGameToTurn(game: Game, turn: number) {
+    const startTurn = game.state.turn
+    const numTurns = turn - startTurn
+    if (numTurns <= 0) return
+
+    // calculate number of turns which are at night
+    const cycleTurnStart = startTurn % 40
+    // TODO regenerate enough brain power to write this simple loop or formula
+    // if (cycleTurnStart >= 30)
+
+
+    // game.cities.forEach((city) => {
+    //   const upkeep = city.getLightUpkeep() * numTurns
+    //   if (city.fuel < upkeep)
+    //     game.destroyCity(city.id)
+    //   else
+    //     city.fuel -= upkeep
+    // })
+
+    game.state.turn = turn
   }
 }
 

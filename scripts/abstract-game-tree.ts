@@ -27,8 +27,11 @@ async function main() {
     const child = root.children[i]
     console.group(`child ${i}`)
     console.log(child.toString(team))
+    console.log(child.game.map.getMapString())
     console.groupEnd()
   }
+
+  console.log(root.game.map.getMapString())
 
   console.groupEnd()
 }
