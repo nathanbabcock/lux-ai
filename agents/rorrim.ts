@@ -88,6 +88,7 @@ async function main() {
         birthAssignments.splice(birthAssignments.indexOf(birthAssignment), 1)
         unitMirrors.set(unit.id, birthAssignment.mirror)
         mirror = unitMirrors.get(unit.id)
+        log(`Retrieved birth assignment for (${birthAssignment.pos.x}, ${birthAssignment.pos.y}) => ${mirror}`)
       }
 
       const mirrorUnit = opponent.units.find(u => u.id === mirror)
@@ -161,6 +162,7 @@ async function main() {
         else 
           actions.push(citytile.buildCart())
         birthAssignments.push({ pos: citytile.pos, mirror: newUnit.id })
+        log(`Created birth assignment for (${citytile.pos.x}, ${citytile.pos.y}) => ${newUnit.id}`)
       }
     }
 

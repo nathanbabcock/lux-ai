@@ -1,86 +1,58 @@
-import { Position } from '../lux/Position'
-import { Unit } from '../lux/Unit'
-import Pathfinding from './Pathfinding'
+import { Cell, Game, Position, Unit } from '@lux-ai/2021-challenge'
 import GAME_CONSTANTS from '../lux/game_constants.json'
+
+function distanceTo(position: Position, target: Position): number {
+  return Math.abs(target.x - position.x) + Math.abs(target.y - position.y)
+}
 
 /**
  * This class will hold simulation code for a
- * higher-level view of the gameplay, looking at unit
- * assignments, their cost in turns, in resulting output
- * or changes in gamestate.
+ * higher-level view of the gameplay, looking only
+ * at citytile locations and resulting changes in gamestate.
+ * Units will be teleported around accordingly, resources costs
+ * will be estimated and deducted, and the day/night cycle will
+ * be kept track of.
  * 
  * Tree search (MCTS or alpha-beta) will be used,
  * possibly in combination with RL for gamestate evaluation.
  */
 export default class Abstraction {
-  /** 
-   * - How long does it take to move to the position and build?
-   */
-  simulateBuildingCity(unit: Unit, cityPos: Position) {
-    // how long is it gonna take?
-    // does it result in +1 unit?
-    // where does that leave the unit? (and where will it branch to next?)
-  }
+  static simulateBuildingCity(cityPos: Position, team: 0 | 1, game: Game) {
+    const teamState = game.state.teamStates[team]
+    const map = game.map
 
-  /**
-   * - How long does it take to move there? (in a straight line, ignoring collision)
-   * - Will any part of the journey happen at night, draining resources or resulting in death?
-   */
-  simulateMoving() {
+    const cityCell = map.getCellByPos(cityPos)
+    if (cityCell.citytile) return false
 
-  }
-
-  /**
-   * - How long does it take to do this?
-   */
-  simulateFuelingCity() {
-
-  }
-}
-
-/**
- * Heuristic for the cost of a unit travelling between any two positions
- * 
- * Does take into account:
- * - Cooldown difference between day and night
- * - Resource cost of moving at night
- * - Death at night
- * 
- * Ignores:
- * - All collision
- * - Resources which might be collected along the way
- */
-export class TravelProgress {
-  unit: Unit
-  from: Position
-  to: Position
-  curTurn: number
-  distance: number
-  remaining: number
-
-  constructor(unit: Unit, to: Position, turn: number) {
-    this.unit = unit
-    this.from = unit.pos
-    this.to = to
-    this.curTurn = turn
-    this.distance = Pathfinding.manhattan(unit.pos, to)
-    this.remaining = this.distance
-  }
-
-  turn() {
-    const night = isNight(this.curTurn)
-    
-    if (this.unit.canAct()) {
-      this.remaining--
-      this.unit.cooldown += GAME_CONSTANTS.PARAMETERS.UNIT_ACTION_COOLDOWN.WORKER * (night ? 2 : 1)
+    const resources = map.resources
+    let closestResource: Cell | undefined
+    let closestResourceDist = Infinity
+    for (const cell of resources) {
+      if (cell.resource.type === 'coal' && !teamState.researched.coal) continue
+      if (cell.resource.type === 'uranium' && !teamState.researched.wood) continue
+      const dist = distanceTo(cell.pos, cityPos)
+      if (dist < closestResourceDist) {
+        closestResource = cell
+        closestResourceDist = dist
+      }
     }
 
-    if (night) {
-      // TODO spendFuelToSurvive() (/Unit/index.ts:44)
-    }
+    if (!closestResource) return false
 
-    this.unit.cooldown = Math.min(this.unit.cooldown - 1, 0)
-    this.curTurn++
+    let closestUnit: Unit = undefined
+    let closestUnitDist = Infinity
+    for (const unit of teamState.units.values()) {
+      const dist = distanceTo(unit.pos, closestResource.pos)
+      if (dist < closestUnitDist) {
+        closestUnit = unit
+        closestUnitDist = dist
+      }
+    }
+    if (!closestUnit) return false
+
+    game.state.turn += (closestResourceDist + closestUnitDist) * 2
+    closestResource.resource.amount = Math.max(closestResource.resource.amount - 100, 0)
+    game.spawnCityTile(team, cityPos.x, cityPos.y)
   }
 }
 
