@@ -21,6 +21,17 @@ export class AbstractGameNode {
     this.units = units
   }
 
+  toString(team: 0 | 1): string {
+    let result = ''
+    // const units = this.units.map(unit => `{x: ${unit.pos.x}, y: ${unit.pos.y}, turn: ${unit.turn}}`).join(', ')
+    // result += `Units (${this.units.length}): ${units}\n`
+    result += `Units: ${this.units.length}\n`
+    result += `Turn: ${this.game.state.turn}\n`
+    result += `Citytiles: ${countCityTiles(this.game, team)}\n`
+    result += `Children: ${this.children.length}\n`
+    return result
+  }
+
   /**
    * Creates all possible children nodes and adds them to `this.children`.
    * Each child uses the unit which will complete the task on the earliest possible turn.
