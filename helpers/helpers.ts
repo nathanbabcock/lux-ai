@@ -210,3 +210,7 @@ export function initTurn(gameState) {
 
   return { actions, otherUnitMoves, player, opponent, gameMap, resourceTiles, clusters, director }
 }
+
+export function otherTeam(team: 0 | 1): 0 | 1 {
+  return (team + 1) % 2 as 0 | 1
+}
