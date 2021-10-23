@@ -397,25 +397,37 @@ export default class Abstraction {
     return perimeter
   }
 
+  static expansion(node: AbstractGameNode) {
+    if (node.children.length > 0) return
+    const newCityPositions = Abstraction.getAllPerimeterCells(node.game).map(c => c.pos)
+    node.generateBuildCityNodes(newCityPositions)
+    node.generateRefuelNodes()
+    if (node.children.length === 0 && node.game.state.turn < 360)
+      node.generateEndgameNode()
+  }
+
   /**
    * Do a full light playout, recursively generating
    * children and then choosing a random one to expand again,
    * until no more moves can be found for any unit.
    */
-  static expandLightPlayout(root: AbstractGameNode) {
+  static expandLightPlayout(root: AbstractGameNode): {depth: number, value: number} {
     let node = root
+    let depth = 0
     while (node && !gameOver(node.game)) {
-      const newCityPositions = Abstraction.getAllPerimeterCells(node.game).map(c => c.pos)
-      node.generateBuildCityNodes(newCityPositions)
-      node.generateRefuelNodes()
+      depth++
       if (node.children.length === 0)
-        node.generateEndgameNode()
-      const child = chooseRandom(node.children)
+        Abstraction.expansion(node)
+      const child = chooseRandom(node.children) // undefined on leaf nodes
       node = child
     }
 
-    Abstraction.backpropagation(node, Abstraction.getGameValue(node.game, node.team))
+    const value = Abstraction.getGameValue(node.game, node.team)
+    Abstraction.backpropagation(node, value)
+
+    return { depth, value }
   }
+  
 
   static backpropagation(node: AbstractGameNode, value: 0 | 0.5 | 1) {
     let curNode = node

@@ -38,9 +38,6 @@ export default function getResults(game: Game): any {
       ],
       replayFile: null,
     };
-    if (game.configs.storeReplay) {
-      results.replayFile = game.replay.replayFilePath;
-    }
     return results;
   }
 

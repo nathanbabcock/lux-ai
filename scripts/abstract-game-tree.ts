@@ -12,17 +12,18 @@ async function main() {
   const team = 0 // orange team
   const root = AbstractGameNode.fromGame(game, team)
 
-  console.log('Expanding playout thru end of game...')
+  const playouts = 25
   const start = new Date().getTime()
-  Abstraction.expandLightPlayout(root)
+  for (let i = 0; i < playouts; i++) {
+    console.log(`Running playout ${i}/${playouts}`)
+    const { depth } = Abstraction.expandLightPlayout(root)
+    console.log(` > depth: ${depth}`)
+  }
   const end = new Date().getTime() - start
-  
-  // const dot = Abstraction.renderGraphViz(root)
-  // writeFileSync('graphviz/agt.dot', dot)
 
   let i = 0
   let cur = root
-  while (cur) {
+  while (cur && i < 10) {
     i++
     console.log()
     console.log(`Depth ${i}`)
@@ -31,7 +32,7 @@ async function main() {
     cur = cur.children.find(c => c.children.length > 0 || c.game.state.turn >= 360)
   }
 
-  console.log(`Playout expansion took ${end}ms`)
+  console.log(`${playouts} playouts took ${end}ms`)
 }
 
 main()
