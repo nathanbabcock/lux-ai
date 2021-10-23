@@ -8,6 +8,7 @@ import Convert from './Convert'
 import getGameResults from './getGameResults'
 import { otherTeam } from './helpers'
 import { chooseRandom } from './util'
+import uuid from './uuid'
 
 function distanceTo(position: Position, target: Position): number {
   return Math.abs(target.x - position.x) + Math.abs(target.y - position.y)
@@ -40,6 +41,31 @@ export class AbstractGameNode {
     this.action = action
   }
 
+  /** Recursively renders this node and all its children to a partial DOT graphviz representation */
+  render(parent_uuid?: string) {
+    let result = ''
+    if (!parent_uuid) parent_uuid = uuid()
+
+    let label = ''
+    if (this.game)
+      label += `Turn ${this.game.state.turn}<br/>`
+    if (!this.parent)
+      label += 'root\<br/>'
+    if (this.action)
+      label += `Action: ${this.action.unit} ${this.action.type} ${this.action.target.x} ${this.action.target.y}<br/>`
+    label += `<b>${this.wins}/${this.plays}</b>`
+
+    result += `  ${parent_uuid} [label=<${label}>]\n`
+
+    this.children.forEach(child => {
+      const child_uuid = uuid()
+      result += `  ${parent_uuid} -- ${child_uuid}\n`
+      result += child.render(child_uuid)
+    })
+
+    return result
+  }
+
   toString(): string {
     let result = ''
     // const units = this.units.map(unit => `{x: ${unit.pos.x}, y: ${unit.pos.y}, turn: ${unit.turn}}`).join(', ')
@@ -51,6 +77,7 @@ export class AbstractGameNode {
     result += `Turn: ${this.game.state.turn}\n`
     result += `Citytiles: ${countCityTiles(this.game, 0)}-${countCityTiles(this.game, 1)} \n`
     result += `Children: ${this.children.length}\n`
+    result += `Eval: ${this.wins}/${this.plays} (${Math.round((this.wins/this.plays) * 100)}%)`
     return result
   }
 
@@ -411,6 +438,14 @@ export default class Abstraction {
       return 1
     else
       return 0
+  }
+
+  static renderGraphViz(root: AbstractGameNode) {
+    let result = 'graph {\n'
+    result += `  node [shape=circle fontname="CMU Serif"]\n`
+    result += root.render()
+    result += '}\n'
+    return result
   }
 }
 
