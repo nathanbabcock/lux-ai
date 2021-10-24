@@ -29,13 +29,18 @@ function tacticalSuicide(unit: Unit, gameState: GameState): string | undefined {
       log(`Suicide is a nighttime activity`)
       return undefined
     }
-
-    // For now, try moving into no-man's-land
+    
     const map = gameState.map
+
+    // If possible, try spawning a city which might insta-die
+    // if (unit.getCargoSpaceLeft() < 10 && unit.canAct() && unit.canBuild(map))
+    //   return unit.buildCity()
+
+    // Try moving into no-man's-land
     const cell = map.getCellByPos(unit.pos)
     const neighbors = getNeighbors(cell, map)
     for (const neighbor of neighbors) {
-      if (neighbor.citytile) return
+      if (neighbor.citytile) continue
       const resourceAdjacency = getResourceAdjacency(neighbor, map)
       if (resourceAdjacency > 0) continue
       return unit.move(unit.pos.directionTo(neighbor.pos))
