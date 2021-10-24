@@ -18,8 +18,9 @@ export type AbstractGameAction = {
   type: 'bcity' | 'refuel'
   unit: string
   target: Position
-  waypoint?: Position
   duration: number
+  city?: string
+  waypoint?: Position
 }
 
 export class AbstractGameNode {
@@ -88,52 +89,50 @@ export class AbstractGameNode {
     Abstraction.advanceGameToTurn(gameCopy, 360)
     const newNode = new AbstractGameNode(gameCopy, this.units, otherTeam(this.team), undefined)
     this.addChild(newNode)
+    return newNode
   }
 
-  generateRefuelNodes(team: 0 | 1 = otherTeam(this.team)): AbstractGameNode[] {
-    const cities = Array.from(this.game.cities)
-      .filter(([_, city]) => city.team === team)
-      .map(([_, city]) => city)
+  generateRefuelNode(cityId: string, team: 0 | 1 = otherTeam(this.team)): AbstractGameNode {
+    const city = Array.from(this.game.cities.values()).find(c => c.id === cityId)
     const units = this.units.filter(u => u.team === team)
 
-    for (const city of cities) {
-      let earliestCompletion = Infinity
-      let earliestUnit: UnitLocalState | undefined
-      let earliestGame: Game | undefined
-      let earliestDuration = Infinity
-      let earliestCityPos: Position = undefined
+    let earliestCompletion = Infinity
+    let earliestUnit: UnitLocalState | undefined
+    let earliestGame: Game | undefined
+    let earliestDuration = Infinity
+    let earliestCityPos: Position = undefined
 
-      for (const unit of units) {
-        const gameCopy = cloneGame(this.game)
-        const refuel = Abstraction.simulateRefuel(city, unit, gameCopy)
-        if (!refuel) continue
+    for (const unit of units) {
+      const gameCopy = cloneGame(this.game)
+      const refuel = Abstraction.simulateRefuel(city, unit, gameCopy)
+      if (!refuel) continue
 
-        const newUnit = refuel.unit
-        const cityPos = refuel.cityPos
-        if (newUnit.turn < earliestCompletion) {
-          earliestCompletion = newUnit.turn
-          earliestUnit = newUnit
-          earliestGame = gameCopy
-          earliestDuration = newUnit.turn - unit.turn
-          earliestCityPos = cityPos
-        }
+      const newUnit = refuel.unit
+      const cityPos = refuel.cityPos
+      if (newUnit.turn < earliestCompletion) {
+        earliestCompletion = newUnit.turn
+        earliestUnit = newUnit
+        earliestGame = gameCopy
+        earliestDuration = newUnit.turn - unit.turn
+        earliestCityPos = cityPos
       }
-
-      if (!earliestUnit) continue
-      const newUnits = this.units.filter(u => u.id !== earliestUnit.id)
-      newUnits.push(earliestUnit)
-
-      const action: AbstractGameAction = {
-        unit: earliestUnit.id,
-        type: 'refuel',
-        target: earliestCityPos,
-        duration: earliestDuration,
-      }
-
-      const newNode = new AbstractGameNode(earliestGame, newUnits, earliestUnit.team, action)
-      this.addChild(newNode)
     }
-    return this.children
+
+    if (!earliestUnit) return
+    const newUnits = this.units.filter(u => u.id !== earliestUnit.id)
+    newUnits.push(earliestUnit)
+
+    const action: AbstractGameAction = {
+      unit: earliestUnit.id,
+      city: city.id,
+      type: 'refuel',
+      target: earliestCityPos,
+      duration: earliestDuration,
+    }
+
+    const newNode = new AbstractGameNode(earliestGame, newUnits, earliestUnit.team, action)
+    this.addChild(newNode)
+    return newNode
   }
 
   /**
@@ -145,58 +144,56 @@ export class AbstractGameNode {
    * @performance O(units * destinations); polynomial time
    * @returns the created children
    */
-  generateBuildCityNodes(nextCityPositions: Position[], team: 0 | 1 = otherTeam(this.team)): AbstractGameNode[] {
+  generateBuildCityNode(cityPos: Position, team: 0 | 1 = otherTeam(this.team)): AbstractGameNode {
     const units = this.units.filter(u => u.team === team)
-    for (const cityPos of nextCityPositions) {
-      let earliestCompletion = Infinity
-      let earliestUnit: UnitLocalState | undefined
-      let earliestGame: Game | undefined
-      let earliestDuration = Infinity
+    let earliestCompletion = Infinity
+    let earliestUnit: UnitLocalState | undefined
+    let earliestGame: Game | undefined
+    let earliestDuration = Infinity
 
-      for (const unit of units) {
-        const gameCopy = cloneGame(this.game)
-        const newUnit = Abstraction.simulateBuildingCity(cityPos, unit, gameCopy)
-        if (newUnit.turn < earliestCompletion) {
-          earliestCompletion = newUnit.turn
-          earliestUnit = newUnit
-          earliestGame = gameCopy
-          earliestDuration = newUnit.turn - unit.turn
-        }
+    for (const unit of units) {
+      const gameCopy = cloneGame(this.game)
+      const newUnit = Abstraction.simulateBuildingCity(cityPos, unit, gameCopy)
+      if (newUnit.turn < earliestCompletion) {
+        earliestCompletion = newUnit.turn
+        earliestUnit = newUnit
+        earliestGame = gameCopy
+        earliestDuration = newUnit.turn - unit.turn
       }
-
-      if (!earliestUnit) continue
-      const newUnits = this.units.filter(u => u.id !== earliestUnit.id)
-      newUnits.push(earliestUnit)
-
-      // Spawn a new unit from the new city, if possible
-      // TODO should we instead choose which city to spawn the unit from?
-      if (countCityTiles(earliestGame, earliestUnit.team) > this.units.filter(u => u.team === earliestUnit.team).length) {
-        const worker = earliestGame.spawnWorker(earliestUnit.team, cityPos.x, cityPos.y)
-
-        Abstraction.advanceGameToTurn(earliestGame, earliestUnit.turn + 1) // Take one more turn to spawn the worker
-        // earliestGame.state.turn = Math.max(earliestGame.state.turn, earliestUnit.turn + 1) 
-        
-        const newUnit: UnitLocalState = {
-          pos: worker.pos,
-          turn: earliestUnit.turn + 1,
-          team: worker.team,
-          id: worker.id,
-        }
-
-        newUnits.push(newUnit)
-      }
-
-      const action: AbstractGameAction = {
-        unit: earliestUnit.id,
-        type: 'bcity',
-        target: cityPos,
-        duration: earliestDuration,
-      }
-
-      const newNode = new AbstractGameNode(earliestGame, newUnits, earliestUnit.team, action)
-      this.addChild(newNode)
     }
-    return this.children
+
+    if (!earliestUnit) return
+    const newUnits = this.units.filter(u => u.id !== earliestUnit.id)
+    newUnits.push(earliestUnit)
+
+    // Spawn a new unit from the new city, if possible
+    // TODO should we instead choose which city to spawn the unit from?
+    if (countCityTiles(earliestGame, earliestUnit.team) > this.units.filter(u => u.team === earliestUnit.team).length) {
+      const worker = earliestGame.spawnWorker(earliestUnit.team, cityPos.x, cityPos.y)
+
+      Abstraction.advanceGameToTurn(earliestGame, earliestUnit.turn + 1) // Take one more turn to spawn the worker
+      // earliestGame.state.turn = Math.max(earliestGame.state.turn, earliestUnit.turn + 1) 
+      
+      const newUnit: UnitLocalState = {
+        pos: worker.pos,
+        turn: earliestUnit.turn + 1,
+        team: worker.team,
+        id: worker.id,
+      }
+
+      newUnits.push(newUnit)
+    }
+
+    const action: AbstractGameAction = {
+      unit: earliestUnit.id,
+      type: 'bcity',
+      target: cityPos,
+      duration: earliestDuration,
+    }
+
+    const newNode = new AbstractGameNode(earliestGame, newUnits, earliestUnit.team, action)
+    this.addChild(newNode)
+    return newNode
   }
 
   static fromGame(game: Game, team: 0 | 1): AbstractGameNode {
@@ -397,13 +394,76 @@ export default class Abstraction {
     return perimeter
   }
 
+  /** Expands every possible child node */
   static expansion(node: AbstractGameNode) {
     if (node.children.length > 0) return
     const newCityPositions = Abstraction.getAllPerimeterCells(node.game).map(c => c.pos)
-    node.generateBuildCityNodes(newCityPositions)
-    node.generateRefuelNodes()
+    const team = otherTeam(node.team)
+
+    newCityPositions.forEach(cityPos => node.generateBuildCityNode(cityPos))
+    Array.from(node.game.cities.values()).forEach(city => node.generateRefuelNode(city.id, team))
+
     if (node.children.length === 0 && node.game.state.turn < 360)
       node.generateEndgameNode()
+  }
+
+  /**
+   * Selects a random child node of the given node,
+   * generating a new one if necessary
+   */
+  static randomChild(node: AbstractGameNode): AbstractGameNode | null {
+    const team = otherTeam(node.team)
+    const newCityPositions = Abstraction.getAllPerimeterCells(node.game).map(c => c.pos)
+    const cities = Array.from(node.game.cities.values()).filter(c => c.team === team)
+
+    const possibleActions: AbstractGameAction[] = [
+      ...newCityPositions.map(pos => ({
+        type: 'bcity',
+        target: pos,
+        duration: undefined,
+        unit: undefined,
+      } as AbstractGameAction)),
+      ...cities.map(c => ({
+        type: 'refuel',
+        city: c.id,
+        target: undefined,
+        unit: undefined,
+        duration: undefined,
+      } as AbstractGameAction))
+    ]
+
+    if (possibleActions.length === 0) return null
+
+    const chosenAction = chooseRandom(possibleActions)
+
+    const existingChild = node.children.find(c => c.action
+        && c.action.type === chosenAction.type
+        && (
+          (chosenAction.city && c.action.city === chosenAction.city)
+          || (chosenAction.target && c.action.target.equals(chosenAction.target))
+        )
+      )
+
+    if (existingChild) return existingChild
+
+    if (chosenAction.type === 'bcity') {
+      const newChild = node.generateBuildCityNode(chosenAction.target)
+      if (!newChild) return null
+      node.addChild(newChild)
+      return newChild
+    } else if (chosenAction.type === 'refuel') {
+      const newChild = node.generateRefuelNode(chosenAction.city)
+      if (!newChild) return null
+      node.addChild(newChild)
+      return newChild
+    }
+
+    // node.generateBuildCityNodes(newCityPositions)
+    // node.generateRefuelNodes()
+
+    // TODO is this needed \/ ?
+    // if (node.children.length === 0 && node.game.state.turn < 360)
+    //   node.generateEndgameNode()
   }
 
   /**
@@ -416,11 +476,13 @@ export default class Abstraction {
     let depth = 0
     while (node && !gameOver(node.game)) {
       depth++
-      if (node.children.length === 0)
-        Abstraction.expansion(node)
-      const child = chooseRandom(node.children) // undefined on leaf nodes
+      const child = Abstraction.randomChild(node)
+      if (!child) break
       node = child
     }
+
+    if (node.game.state.turn < 360)
+      node = node.generateEndgameNode()
 
     const value = Abstraction.getGameValue(node.game, node.team)
     Abstraction.backpropagation(node, value)

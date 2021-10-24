@@ -12,7 +12,7 @@ async function main() {
   const team = 0 // orange team
   const root = AbstractGameNode.fromGame(game, team)
 
-  const playouts = 25
+  const playouts = 500
   const start = new Date().getTime()
   for (let i = 0; i < playouts; i++) {
     console.log(`Running playout ${i}/${playouts}`)
