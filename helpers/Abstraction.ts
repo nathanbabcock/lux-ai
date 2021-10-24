@@ -367,6 +367,7 @@ export default class Abstraction {
    * 
    * Currently handles ONLY:
    * - City light upkeep and destruction
+   * - Research point gen
    * 
    * Ignored or not handled:
    * - Unit upkeep and death
@@ -400,6 +401,16 @@ export default class Abstraction {
       else
         city.fuel -= upkeep
     })
+  
+    // Assumes constant research point rate and ignores cost of spawning units
+    for (const team of [0, 1]) {
+      const teamState: Game.TeamState = game.state.teamStates[team]
+      teamState.researchPoints += countCityTiles(game, team as 0 | 1) * numTurns / 10
+      if (teamState.researchPoints >= GAME_CONSTANTS.PARAMETERS.RESEARCH_REQUIREMENTS.COAL)
+        teamState.researched.coal = true
+      if (teamState.researchPoints >= GAME_CONSTANTS.PARAMETERS.RESEARCH_REQUIREMENTS.URANIUM)
+        teamState.researched.uranium = true
+    }
 
     game.state.turn = turn
   }
