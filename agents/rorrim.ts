@@ -29,19 +29,19 @@ function tacticalSuicide(unit: Unit, gameState: GameState): string | undefined {
       log(`Suicide is a nighttime activity`)
       return undefined
     }
-    
+
     const map = gameState.map
 
     // If possible, try spawning a city which might insta-die
-    // if (unit.getCargoSpaceLeft() < 10 && unit.canAct() && unit.canBuild(map))
-    //   return unit.buildCity()
+    if (unit.getCargoSpaceLeft() < 10 && unit.canAct() && unit.canBuild(map))
+      return unit.buildCity()
 
     // Try moving into no-man's-land
     const cell = map.getCellByPos(unit.pos)
     const neighbors = getNeighbors(cell, map)
     for (const neighbor of neighbors) {
       if (neighbor.citytile) continue
-      const resourceAdjacency = getResourceAdjacency(neighbor, map)
+      const resourceAdjacency = getResourceAdjacency(neighbor, map, gameState.players[gameState.id])
       if (resourceAdjacency > 0) continue
       return unit.move(unit.pos.directionTo(neighbor.pos))
     }
@@ -169,6 +169,16 @@ async function main() {
         birthAssignments.push({ pos: citytile.pos, mirror: newUnit.id })
         log(`Created birth assignment for (${citytile.pos.x}, ${citytile.pos.y}) => ${newUnit.id}`)
       }
+    }
+
+    // Mark unpaired opponent units
+    for (const unit of opponent.units) {
+      const mirror = Array.from(unitMirrors.values()).find(u => u === unit.id)
+      if (mirror) continue
+      // if (birthAssignments.find(a => a.mirror === unit.id)) continue
+
+      log(`Opponent unit ${unit.id} missing mirror`)
+      actions.push(annotate.circle(unit.pos.x, unit.pos.y))
     }
 
     previousGameState = deepClone(GameState, gameState)

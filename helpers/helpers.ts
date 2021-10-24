@@ -1,3 +1,4 @@
+import { SSL_OP_LEGACY_SERVER_CONNECT } from 'constants'
 import type { GameState } from '../lux/Agent'
 import type { Cell } from '../lux/Cell'
 import { City } from '../lux/City'
@@ -184,11 +185,17 @@ export function getNeighbors(cell: Cell, gameMap: GameMap): Array<Cell> {
 }
 
 /**  Get the number of resources accessible to a worker on the given Cell, between 0-5 */
-export function getResourceAdjacency(cell: Cell, gameMap: GameMap): number {
-  const neighbors = getNeighbors(cell, gameMap)
-  let adjacency = cell.hasResource() ? 1 : 0
-  neighbors.forEach((neighbor) => {
-    if (neighbor.hasResource()) adjacency++
+export function getResourceAdjacency(cell: Cell, gameMap: GameMap, player?: Player): number {
+  const cells = [cell, ...getNeighbors(cell, gameMap)]
+  let adjacency = 0
+  cells.forEach((neighbor) => {
+    if (!neighbor.hasResource()) return
+    const canGather = !player
+      || neighbor.resource.type === 'wood'
+      || (neighbor.resource.type === 'coal' && player.researchedCoal())
+      || (neighbor.resource.type === 'uranium' && player.researchedUranium())
+    if (!canGather) return
+    adjacency++
   })
   return adjacency
 }
