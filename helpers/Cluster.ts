@@ -7,7 +7,12 @@ import { getMapCenter, getNeighbors, getResourceAdjacency, getResources } from '
 import { log } from './logging'
 
 export default class Cluster {
+  public type: string
   public cells: Cell[] = []
+
+  constructor(type: string) {
+    this.type = type
+  }
 
   getUnits(clusters: Array<Cluster>, units: Array<Unit>): Array<Unit> {
     return units.filter(unit => getClosestCluster(clusters, unit.pos) === this)
@@ -87,13 +92,13 @@ export function getClosestCluster(clusters: Array<Cluster>, pos: Position) {
  * @todo only list cluster of resource types which can be mined (??)
  */
 export function getClusters(map: GameMap) {
-  const clusters: Array<Cluster> = []
+  const clusters: Cluster[] = []
   const resources = getResources(map)
   for (let i = 0; i < resources.length; i++) {
     const cell = resources[i]
-    let cluster = clusters.find(cluster => cluster.cells.some(clusterCell => clusterCell.pos.isAdjacent(cell.pos)))
+    let cluster = clusters.find(cluster => cluster.type === cell.resource.type && cluster.cells.some(clusterCell => clusterCell.pos.isAdjacent(cell.pos)))
     if (!cluster) {
-      cluster = new Cluster()
+      cluster = new Cluster(cell.resource.type)
       clusters.push(cluster)
     }
     cluster.cells.push(cell)
@@ -102,7 +107,7 @@ export function getClusters(map: GameMap) {
   outer: while (true) {
     for (let i = 0; i < clusters.length; i++) {
       const cluster = clusters[i]
-      const connected = clusters.find(cluster2 => cluster !== cluster2 && cluster.cells.some(cell => cluster2.cells.some(cell2 => cell2.pos.isAdjacent(cell.pos))))
+      const connected = clusters.find(cluster2 => cluster !== cluster2 && cluster.type === cluster2.type && cluster.cells.some(cell => cluster2.cells.some(cell2 => cell2.pos.isAdjacent(cell.pos))))
       if (connected) {
         cluster.cells.push(...connected.cells)
         clusters.splice(clusters.indexOf(connected), 1)

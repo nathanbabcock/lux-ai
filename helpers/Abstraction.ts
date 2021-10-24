@@ -404,9 +404,11 @@ export default class Abstraction {
     game.state.turn = turn
   }
 
-  static getAllPerimeterCells(game: Game) {
-    const gameState = Convert.toGameState(game, 0)
+  static getAllPerimeterCells(game: Game, team: 0 | 1) {
+    const gameState = Convert.toGameState(game, team)
+    const teamState = game.state.teamStates[team]
     const clusters = getClusters(gameState.map)
+      .filter(cluster => teamState.researched[cluster.type]) // only clusters of a researched resource type
     const perimeter: Cell[] = []
     clusters
       .flatMap(c => c.getPerimeter(gameState.map))
@@ -420,8 +422,8 @@ export default class Abstraction {
   /** Expands every possible child node */
   static expansion(game: Game, node: AbstractGameNode) {
     if (node.children.length > 0) return
-    const newCityPositions = Abstraction.getAllPerimeterCells(game).map(c => c.pos)
     const team = otherTeam(node.team)
+    const newCityPositions = Abstraction.getAllPerimeterCells(game, team).map(c => c.pos)
 
     newCityPositions.forEach(cityPos => node.generateBuildCityNode(game, cityPos))
     Array.from(game.cities.values()).forEach(city => node.generateRefuelNode(game, city.id, team))
@@ -436,7 +438,7 @@ export default class Abstraction {
    */
   static randomChild(game: Game, node: AbstractGameNode): { node: AbstractGameNode, game: Game } | null {
     const team = otherTeam(node.team)
-    const newCityPositions = Abstraction.getAllPerimeterCells(game).map(c => c.pos)
+    const newCityPositions = Abstraction.getAllPerimeterCells(game, team).map(c => c.pos)
     const cities = Array.from(game.cities.values()).filter(c => c.team === team)
 
     const possibleActions: AbstractGameAction[] = [
@@ -489,6 +491,7 @@ export default class Abstraction {
    * until no more moves can be found for any unit.
    */
   static expandLightPlayout(game: Game, root: AbstractGameNode): {depth: number, value: number} {
+   
     let node = root
     let depth = 0
     let curGame = game
