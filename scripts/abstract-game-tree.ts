@@ -1,4 +1,3 @@
-import { writeFileSync } from 'fs'
 import Abstraction, { AbstractGameNode } from '../helpers/Abstraction'
 import { initSeed } from '../helpers/test-util'
 
@@ -12,24 +11,25 @@ async function main() {
   const team = 0 // orange team
   const root = AbstractGameNode.fromGame(game, team)
 
-  const playouts = 500
+  const playouts = 1000
   const start = new Date().getTime()
   for (let i = 0; i < playouts; i++) {
     console.log(`Running playout ${i}/${playouts}`)
-    const { depth } = Abstraction.expandLightPlayout(root)
+    const { depth } = Abstraction.expandLightPlayout(game, root)
     console.log(` > depth: ${depth}`)
   }
   const end = new Date().getTime() - start
 
+
+  console.log()
+  console.log('Root')
+  console.log(root.toString())
+
   let i = 0
-  let cur = root
-  while (cur && i < 10) {
-    i++
+  for (const child of root.children) {
     console.log()
-    console.log(`Depth ${i}`)
-    console.log(cur.toString())
-    // console.log(cur.game.map.getMapString())
-    cur = cur.children.find(c => c.children.length > 0 || c.game.state.turn >= 360)
+    console.log(`Depth 1 Child ${i++}`)
+    console.log(child.toString())
   }
 
   console.log(`${playouts} playouts took ${end}ms`)
