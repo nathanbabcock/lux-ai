@@ -3,6 +3,7 @@ import { clearLog, log } from '../helpers/logging'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Agent, annotate } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
+import { writeFileSync } from 'fs'
 
 const agent = new Agent()
 
@@ -56,14 +57,20 @@ async function main() {
       if (value > maxLightLevel) maxLightLevel = value
     })
 
+
+    const levelsArray: number[][] = []
     for (let y = 0; y < map.height; y++) {
+      levelsArray.push([])
       for (let x = 0; x < map.width; x++) {
         const cell = map.getCell(x, y)
         const lightLevel = lightLevels.get(cell)
-        const normalizedLightLevel = (lightLevel / maxLightLevel) * 255
-        actions.push(annotate.text(cell.pos.x, cell.pos.y, `${Math.round(normalizedLightLevel)}`))
+        const normalizedLightLevel = Math.round((lightLevel / maxLightLevel) * 255)
+        actions.push(annotate.text(cell.pos.x, cell.pos.y, `${normalizedLightLevel}`))
+        levelsArray[y].push(normalizedLightLevel)
       }
     }
+
+    writeFileSync('../../replays/light-levels.json', JSON.stringify(levelsArray))
 
     return actions
   })

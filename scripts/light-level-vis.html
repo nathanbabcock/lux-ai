@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lux AI Light Level Visualizer</title>
+</head>
+<body>
+  <input id="upload" type="file" accept="application/json">
+  <canvas id="canvas"></canvas>
+
+  <script>
+    function handleFileSelect(evt) {
+      const files = evt.target.files
+      f = files[0]
+      const reader = new FileReader()
+      reader.addEventListener('load', (event) => {
+        console.log(event.target.result)
+        drawLightLevels(JSON.parse(event.target.result))
+      })
+      reader.readAsText(f)
+    }
+
+    const input = document.getElementById('upload')
+    input.addEventListener('change', handleFileSelect, false)
+
+    function drawLightLevels(lightLevels) {
+      const canvas = document.getElementById('canvas')
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const rectSize = 10
+      for (let y = 0; y < lightLevels.length; y++) {
+        for (let x = 0; x < lightLevels[y].length; x++) {
+          ctx.fillStyle = `rgb(${lightLevels[y][x]},${lightLevels[y][x]},${lightLevels[y][x]})`
+          ctx.fillRect(x * rectSize, y * rectSize, rectSize, rectSize)
+        }
+      }
+    }
+
+    const defaultLightLevels = [[9,13,16,20,21,18,17,17,17,17,18,21,20,16,13,9],[13,16,21,26,26,24,24,24,24,24,24,26,26,21,16,13],[14,20,27,30,29,27,27,27,27,27,27,29,30,27,20,14],[13,23,30,31,27,22,20,20,20,20,22,27,31,30,23,13],[14,25,32,32,27,18,13,13,13,13,18,27,32,32,25,14],[11,21,27,27,21,13,8,6,6,8,13,21,27,27,21,11],[6,13,18,19,15,9,5,1,1,5,9,15,19,18,13,6],[8,6,9,10,9,5,1,0,0,1,5,9,10,9,6,8],[70,8,4,4,5,1,0,11,11,0,1,5,4,4,8,70],[163,70,8,1,1,0,11,41,41,11,0,1,1,8,70,163],[255,163,70,7,0,11,41,82,82,41,11,0,7,70,163,255],[255,163,70,17,11,41,82,129,129,82,41,11,17,70,163,255],[163,71,18,0,7,37,82,129,129,82,37,7,0,18,71,163],[71,19,2,0,0,7,37,82,82,37,7,0,0,2,19,71],[19,4,4,2,0,0,7,37,37,7,0,0,2,4,4,19],[4,7,7,4,2,0,0,7,7,0,0,2,4,7,7,4]]
+    drawLightLevels(defaultLightLevels)
+  </script>
+</body>
+</html>
