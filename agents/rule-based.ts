@@ -70,8 +70,18 @@ async function main() {
       if (clustersToExplore.length === 0) return null
       let closestDist = Infinity
       let closestCell: Cell = undefined
-      for (const cluster of clustersToExplore) {
+      clusters: for (const cluster of clustersToExplore) {
         const perimeter = cluster.getPerimeter(map)
+
+        // skip the cluster if there's already an explorer going to it
+        for (const job of jobs.values()) {
+          if (!(job instanceof BuildCity)) continue
+          if (perimeter.find(cell => cell.pos.equals(job.cityPos))) continue clusters
+          if (cluster.cells.find(cell => cell.pos.equals(job.cityPos))) continue clusters
+        }
+
+        // TODO skip it if this isn't the closest cluster
+
         for (const cell of perimeter) {
           const existingPlans = turn.cityPlans.find(pos => pos.equals(cell.pos))
           if (existingPlans) continue
@@ -111,11 +121,14 @@ async function main() {
     }
 
     function getJob(unit: Unit): Job | null {
-      const explore = getExploreJob(unit)
-      if (explore) return explore
+      // const explore = getExploreJob(unit)
+      // if (explore) return explore
 
       const fortify = getFortifyJob(unit)
       if (fortify) return fortify
+
+      const explore = getExploreJob(unit)
+      if (explore) return explore
 
       return null
     }
