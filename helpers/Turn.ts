@@ -19,6 +19,7 @@ export default class Turn {
   gameState: GameState
   actions: string[]
   otherUnitMoves: Position[]
+  cityPlans: Position[]
   player: Player
   opponent: Player
   gameMap: GameMap
@@ -44,6 +45,7 @@ export default class Turn {
     this.gameState = gameState
     this.actions = []
     this.otherUnitMoves = []
+    this.cityPlans = []
     this.player = gameState.players[gameState.id]
     this.opponent = gameState.players[(gameState.id + 1) % 2]
     this.gameMap = gameState.map

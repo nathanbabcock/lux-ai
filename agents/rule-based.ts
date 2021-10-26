@@ -17,6 +17,7 @@ class Job {
     throw new Error('Method not implemented.')
   }
 }
+
 class BuildCity extends Job {
   cityPos: Position
 
@@ -29,7 +30,7 @@ class BuildCity extends Job {
       if (unit.getCargoSpaceLeft() === 0)
         return unit.buildCity()
       else
-        return undefined
+        return turn.wait(unit)
     } else {
       const dir = unit.pos.directionTo(this.cityPos)
       return turn.moveWithCollisionAvoidance(unit, dir)
@@ -72,6 +73,8 @@ async function main() {
       for (const cluster of clustersToExplore) {
         const perimeter = cluster.getPerimeter(map)
         for (const cell of perimeter) {
+          const existingPlans = turn.cityPlans.find(pos => pos.equals(cell.pos))
+          if (existingPlans) continue
           const dist = cell.pos.distanceTo(unit.pos)
           if (dist < closestDist) {
             closestDist = dist
@@ -97,6 +100,7 @@ async function main() {
         return null
       }
       const emptyPerimeterCells = curCluster.getPerimeter(map)
+        .filter(cell => !turn.cityPlans.find(pos => pos.equals(cell.pos)))
       if (emptyPerimeterCells.length === 0) return null
       const closestCell = getClosestCell(map.getCellByPos(unit.pos), emptyPerimeterCells)
 
@@ -117,18 +121,32 @@ async function main() {
     }
 
     for (const unit of turn.player.units) {
-      const job = jobs.get(unit.id)
-      if (job) {
-        if (job.done(turn)) {
-          jobs.delete(unit.id)
-        } else {
-          const action = job.action(unit, turn)
-          if (action) actions.push(action)
-          continue
-        }
+      let job = jobs.get(unit.id)
+
+      if (!job) continue
+
+      if (job.done(turn)) {
+        jobs.delete(unit.id)
+        job = null
       }
-      const newJob = getJob(unit)
-      if (newJob) jobs.set(unit.id, newJob)
+
+      if (job instanceof BuildCity)
+        turn.cityPlans.push(job.cityPos)
+    }
+
+    for (const unit of turn.player.units) {
+      let job = jobs.get(unit.id)
+
+      if (!job) {
+        job = getJob(unit)
+        if (!job) continue
+        jobs.set(unit.id, job)
+        if (job instanceof BuildCity)
+          turn.cityPlans.push(job.cityPos)
+      }
+
+      const action = job.action(unit, turn)
+      if (action) actions.push(action)
     }
 
     actions.push(...turn.autoCities())
