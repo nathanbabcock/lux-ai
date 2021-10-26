@@ -1,4 +1,4 @@
-import { getNeighbors, getResources } from '../helpers/helpers'
+import { getNeighbors, getResources, moveWithCollisionAvoidance } from '../helpers/helpers'
 import { clearLog, log } from '../helpers/logging'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Agent, annotate } from '../lux/Agent'
@@ -7,6 +7,7 @@ import { writeFileSync } from 'fs'
 import { Player } from '../lux/Player'
 import Turn from '../helpers/Turn'
 import { randomActions } from './random'
+import { Position } from '../lux/Position'
 
 const agent = new Agent()
 
@@ -19,6 +20,7 @@ async function main() {
 
   agent.run(async gameState => {
     const actions = []
+    const otherUnitMoves: Position[] = []
     // if (gameState.turn  > 0) return actions
 
     // Let's imagine every entity in the game emits light (it's thematic, after all)
@@ -117,14 +119,16 @@ async function main() {
         if (!minLightCell) continue
 
         const dir = unit.pos.directionTo(minLightCell.pos)
-        actions.push(unit.move(dir))
+        moveWithCollisionAvoidance(gameState, unit, dir, otherUnitMoves, actions)
+        // actions.push(unit.move(dir))
         continue
       }
       if (!maxLightCell) continue
       if (maxLightCell.citytile) continue
 
       const dir = unit.pos.directionTo(maxLightCell.pos)
-      actions.push(unit.move(dir))
+      // actions.push(unit.move(dir))
+      moveWithCollisionAvoidance(gameState, unit, dir, otherUnitMoves, actions)
     }
 
     const turn = new Turn(gameState)
