@@ -102,7 +102,7 @@ export function moveWithCollisionAvoidance(gameState: GameState, unit: Unit, dir
 
     // Otherwise stay where you are (never go backwards)
     otherUnitMoves.push(unit.pos)
-    actions.push(unit.move('center'))
+    //actions.push(unit.move('center'))
   } else {
     otherUnitMoves.push(destination)
     actions.push(unit.move(dir))
@@ -220,4 +220,17 @@ export function initTurn(gameState) {
 
 export function otherTeam(team: 0 | 1): 0 | 1 {
   return (team + 1) % 2 as 0 | 1
+}
+
+export function getClosestCell(reference: Cell, cells: Cell[]): Cell {
+  let closestDist = Infinity
+  let closestCell: Cell = undefined
+  for (const cell of cells) {
+    const dist = cell.pos.distanceTo(reference.pos)
+    if (dist < closestDist) {
+      closestDist = dist
+      closestCell = cell
+    }
+  }
+  return closestCell
 }

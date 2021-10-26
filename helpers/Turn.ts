@@ -49,6 +49,8 @@ export default class Turn {
     this.gameMap = gameState.map
     this.resourceTiles = getResources(gameState.map)
     this.clusters = getClusters(this.gameMap)
+    for (const cluster of this.clusters)
+      cluster.units = cluster.getUnits(gameState)
     this.director = new Director()
     this.director.setClusters(this.clusters)
   }
@@ -83,9 +85,10 @@ export default class Turn {
     return false
   }
 
-  wait(unit: Unit){
+  wait(unit: Unit): undefined {
     this.otherUnitMoves.push(unit.pos)
-    return unit.move('center') // instead of adding it directly to actions
+    return undefined
+    //return unit.move('center') // instead of adding it directly to actions
   }
 
   moveUnit(unit: Unit, dir: string): string {
@@ -93,7 +96,7 @@ export default class Turn {
     return unit.move(dir)
   }
 
-  moveWithCollisionAvoidance(unit: Unit, dir: string): string {
+  moveWithCollisionAvoidance(unit: Unit, dir: string): string | undefined {
     const destination = unit.pos.translate(dir, 1)
     const teamUnitCollision = this.otherUnitMoves
       .some((pos) => pos.equals(destination))
@@ -202,6 +205,7 @@ export default class Turn {
     }
   }
 
+  //// why
   async settlerTreeSearch(
     sim: Sim,
     assignments: Assignments = {},

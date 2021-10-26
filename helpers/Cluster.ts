@@ -1,3 +1,4 @@
+import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { CityTile } from '../lux/CityTile'
 import { GameMap } from '../lux/GameMap'
@@ -9,12 +10,27 @@ import { log } from './logging'
 export default class Cluster {
   public type: string
   public cells: Cell[] = []
+  public units: Unit[] = []
 
   constructor(type: string) {
     this.type = type
   }
 
-  getUnits(clusters: Array<Cluster>, units: Array<Unit>): Array<Unit> {
+  /** Returns units from either team who are inside of this cluster or on its perimeter */
+  getUnits(gameState: GameState): Unit[] {
+    const map = gameState.map
+    const units: Unit[] = []
+    const perimeter = this.getPerimeter(map, true)
+    const cells = [...this.cells, ...perimeter]
+    for (const player of gameState.players)
+      for (const unit of player.units)
+        for (const cell of cells)
+          if (cell.pos.equals(unit.pos))
+            units.push(unit)
+    return units
+  }
+
+  getClosestUnits(clusters: Array<Cluster>, units: Array<Unit>): Array<Unit> {
     return units.filter(unit => getClosestCluster(clusters, unit.pos) === this)
   }
 
@@ -30,14 +46,14 @@ export default class Cluster {
   }
 
   /** Get all cells adjacent to a cell in this cluster, but not a part of the cluster itself */
-  getPerimeter(gameMap: GameMap): Array<Cell> {
+  getPerimeter(gameMap: GameMap, allowCityTiles: boolean = false): Array<Cell> {
     const perimeter: Array<Cell> = []
     this.cells.forEach(cell => {
       const neighbors = getNeighbors(cell, gameMap)
       neighbors.forEach(neighbor => {
         if (this.cells.find(cell => cell.pos.equals(neighbor.pos))) return
         if (perimeter.find(cell => cell.pos.equals(neighbor.pos))) return
-        if (neighbor.citytile) return
+        if (neighbor.citytile && !allowCityTiles) return
         if (neighbor.resource) return
         perimeter.push(neighbor)
       })
@@ -87,10 +103,6 @@ export function getClosestCluster(clusters: Array<Cluster>, pos: Position) {
   return closest
 }
 
-/**
- * @todo clusters should be homogenous resource types
- * @todo only list cluster of resource types which can be mined (??)
- */
 export function getClusters(map: GameMap) {
   const clusters: Cluster[] = []
   const resources = getResources(map)
