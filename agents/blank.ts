@@ -1,9 +1,7 @@
-import DirectorV2 from '../helpers/DirectorV2'
 import { clearLog, log } from '../helpers/logging'
 import { Agent } from '../lux/Agent'
 
 const agent = new Agent()
-const director = new DirectorV2()
 
 async function main() {
   clearLog()
@@ -13,10 +11,10 @@ async function main() {
   log(new Date().toLocaleString())
 
   agent.run(async gameState => {
+    log(`=== TURN ${gameState.turn} ===`)
     const actions: string[] = []
     return actions
   })
 }
 
 main()
-
