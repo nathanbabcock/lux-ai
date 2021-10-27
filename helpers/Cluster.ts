@@ -45,7 +45,10 @@ export default class Cluster {
     return new Position(Math.round(x), Math.round(y))
   }
 
-  /** Get all cells adjacent to a cell in this cluster, but not a part of the cluster itself */
+  /**
+   * Get all cells adjacent to a cell in this cluster, but not a part of the cluster itself
+   * @param allowCityTiles default = false
+  */
   getPerimeter(gameMap: GameMap, allowCityTiles: boolean = false): Array<Cell> {
     const perimeter: Array<Cell> = []
     this.cells.forEach(cell => {
