@@ -12,11 +12,12 @@ import { Unit } from '../lux/Unit'
 const agent = new Agent()
 
 function getAssignments(turn: Turn): Assignment[] {
-  const assignments: Assignment[] = []
-  assignments.push(...Settler.getAssignments(turn))
-  assignments.push(...Guard.getAssignments(turn))
-  assignments.push(...Miner.getAssignments(turn))
-  assignments.push(...Builder.getAssignments(turn))
+  const assignments: Assignment[] = [
+    ...Settler.getAssignments(turn),
+    ...Guard.getAssignments(turn),
+    ...Miner.getAssignments(turn),
+    ...Builder.getAssignments(turn),
+  ]
   return assignments
 }
 
@@ -80,18 +81,16 @@ async function main() {
   agent.run(async gameState => {
     log(`=== TURN ${gameState.turn} ===`)
     const turn = new Turn(gameState)
-    const actions = turn.actions
     const allAssignments = getAssignments(turn)
     const units = turn.player.units
     const costMatrix = createCostMatrix(units, allAssignments, turn)
-    const start = new Date().getTime()
     const solvedAssignments = hungarianMethod(costMatrix)
-    const time = new Date().getTime() - start
-    // log(`${solvedAssignments.length} optimal assignments found in ${time}`)
     const assignmentActions = getAssignmentActions(solvedAssignments, units, allAssignments, turn)
-    actions.push(...annotateAssignments(solvedAssignments, units, allAssignments))
-    actions.push(...assignmentActions)
-    actions.push(...turn.autoCities())
+    const actions = turn.actions = [
+      ...annotateAssignments(solvedAssignments, units, allAssignments),
+      ...assignmentActions,
+      ...turn.autoCities(),
+    ]
     return actions
   })
 }
