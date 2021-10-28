@@ -39,6 +39,7 @@ export default class Settler extends Assignment {
     // Must gather resources first
     if (unit.getCargoSpaceLeft() > 0) {
       const closestResource = turn.getClosestResourceTile(unit, 'wood') // only use wood for building, for now
+      if (!closestResource) return Number.MAX_SAFE_INTEGER
       const resourceDist = unit.pos.distanceTo(closestResource.pos)
       const cityDist = closestResource.pos.distanceTo(this.target)
       return resourceDist + cityDist

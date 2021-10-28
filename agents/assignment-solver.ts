@@ -90,7 +90,7 @@ async function main() {
     const start = new Date().getTime()
     const solvedAssignments = hungarianMethod(costMatrix)
     const time = new Date().getTime() - start
-    log(`${solvedAssignments.length} optimal assignments found in ${time}`)
+    // log(`${solvedAssignments.length} optimal assignments found in ${time}`)
     const assignmentActions = getAssignmentActions(solvedAssignments, units, allAssignments, turn) 
     actions.push(...assignmentActions)
     actions.push(...turn.autoCities())
