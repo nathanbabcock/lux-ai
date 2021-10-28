@@ -1,6 +1,7 @@
 import Pathfinding from '../helpers/Pathfinding'
 import { PositionState } from '../helpers/StateNode'
 import Turn from '../helpers/Turn'
+import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import { Unit } from '../lux/Unit'
 import Assignment from './Assignment'
@@ -45,5 +46,19 @@ export default class Settler extends Assignment {
     }
 
     return unit.pos.distanceTo(this.target)
+  }
+
+  static getAssignments(turn: Turn): Settler[] {
+    const assignments: Settler[] = []
+    for (const cluster of turn.clusters) {
+      if (cluster.type === 'coal' && turn.player.researchPoints < GAME_CONSTANTS.PARAMETERS.RESEARCH_REQUIREMENTS.COAL * 0.8) continue
+      if (cluster.type === 'uranium' && turn.player.researchPoints < GAME_CONSTANTS.PARAMETERS.RESEARCH_REQUIREMENTS.URANIUM * 0.8) continue
+      const perimeter = cluster.getPerimeter(turn.map, false)
+      for (const cell of perimeter) {
+        const settler = new Settler(cell.pos)
+        assignments.push(settler)
+      }
+    }
+    return assignments
   }
 }
