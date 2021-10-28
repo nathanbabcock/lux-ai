@@ -94,8 +94,10 @@ export default class Turn {
     //return unit.move('center') // instead of adding it directly to actions
   }
 
-  moveUnit(unit: Unit, dir: string): string {
+  moveUnit(unit: Unit, dir: string): string | undefined {
     this.otherUnitMoves.push(unit.pos.translate(dir, 1))
+    if (dir === GAME_CONSTANTS.DIRECTIONS.CENTER)
+      return undefined
     return unit.move(dir)
   }
 
@@ -179,11 +181,12 @@ export default class Turn {
 
   /** Automatically build workers & research every turn */
   autoCities(): string[] {
+    let unitsSpawned = 0
     const actions = []
     this.player.cities.forEach((city) => {
       city.citytiles.forEach((citytile) => {
         if (citytile.cooldown >= 1) return
-        if (this.player.units.length < this.player.cityTileCount)
+        if (this.player.units.length + unitsSpawned < this.player.cityTileCount)
           actions.push(citytile.buildWorker())
         else
           actions.push(citytile.research())
