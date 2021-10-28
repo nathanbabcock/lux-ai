@@ -22,7 +22,7 @@ export default class Turn {
   cityPlans: Position[]
   player: Player
   opponent: Player
-  gameMap: GameMap
+  map: GameMap
   resourceTiles: Cell[]
   clusters: Cluster[]
   director: Director
@@ -48,9 +48,9 @@ export default class Turn {
     this.cityPlans = []
     this.player = gameState.players[gameState.id]
     this.opponent = gameState.players[(gameState.id + 1) % 2]
-    this.gameMap = gameState.map
+    this.map = gameState.map
     this.resourceTiles = getResources(gameState.map)
-    this.clusters = getClusters(this.gameMap)
+    this.clusters = getClusters(this.map)
     for (const cluster of this.clusters)
       cluster.units = cluster.getUnits(gameState)
     this.director = new Director()
@@ -158,16 +158,16 @@ export default class Turn {
       // actions.push(annotate.line(unit.pos.x, unit.pos.y, cluster.getCenter().x, cluster.getCenter().y))
 
       cluster.cells.forEach(cell => {
-        annotations.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, this.gameMap)}`))
+        annotations.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, this.map)}`))
       })
 
-      const perimeter = cluster.getPerimeter(this.gameMap)
+      const perimeter = cluster.getPerimeter(this.map)
       perimeter.forEach(cell => {
         annotations.push(annotate.circle(cell.pos.x, cell.pos.y))
-        annotations.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, this.gameMap)}`))
+        annotations.push(annotate.text(cell.pos.x, cell.pos.y, `${getResourceAdjacency(cell, this.map)}`))
       })
 
-      const citySite = cluster.getCitySite(this.gameMap)
+      const citySite = cluster.getCitySite(this.map)
       if (citySite) annotations.push(annotate.line(unit.pos.x, unit.pos.y, citySite.pos.x, citySite.pos.y))
     })
     return annotations
@@ -232,7 +232,7 @@ export default class Turn {
       }
   
       let assignment = assignments[unit.id]
-      if (assignment && this.gameMap.getCellByPos(assignment).citytile) {
+      if (assignment && this.map.getCellByPos(assignment).citytile) {
         delete assignments[unit.id]
       } else if (assignment) {
         actions.push(annotate.circle(assignment.x, assignment.y))
@@ -254,7 +254,7 @@ export default class Turn {
         const cluster = this.clusters[i]
         log(`Simulating mission to cluster ${i} ===`)
   
-        const citySite = cluster.getCitySite(this.gameMap)
+        const citySite = cluster.getCitySite(this.map)
         if (!citySite) {
           log(`No valid city site for cluster ${i}`)
           return

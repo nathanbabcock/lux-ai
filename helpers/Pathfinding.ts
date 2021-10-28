@@ -169,9 +169,9 @@ export default class Pathfinding {
       for (const dir of directions) {
         const destination = cur.pos.translate(dir, 1)
         if (destination.x < 0 || destination.y < 0) continue
-        if (destination.x >= turn.gameMap.width) continue
-        if (destination.y >= turn.gameMap.width) continue
-        const cell = turn.gameMap.getCell(destination.x, destination.y)
+        if (destination.x >= turn.map.width) continue
+        if (destination.y >= turn.map.width) continue
+        const cell = turn.map.getCell(destination.x, destination.y)
         if (cell.citytile && cell.citytile.team !== unit.team) continue // can't move onto enemy city tiles
         if (cell.citytile && avoidCityTiles) continue // avoid all city tiles if necessary
         if (turn.opponent.units.find(unit => unit.pos.equals(destination))) continue // can't move onto enemy units (even if they might move away)

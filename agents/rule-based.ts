@@ -22,7 +22,7 @@ class BuildCity extends Job {
   cityPos: Position
 
   done(turn: Turn): boolean {
-    return !!turn.gameMap.getCellByPos(this.cityPos).citytile
+    return !!turn.map.getCellByPos(this.cityPos).citytile
   }
 
   action(unit: Unit, turn: Turn): string | undefined {
@@ -52,7 +52,7 @@ async function main() {
     const turn = new Turn(gameState)
     const actions = turn.actions
     const clusters = turn.clusters
-    const map = turn.gameMap
+    const map = turn.map
 
     function getExploreJob(unit: Unit): BuildCity | null {
       const curCluster = clusters.find(cluster => cluster.units.includes(unit))

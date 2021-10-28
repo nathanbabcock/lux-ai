@@ -7,6 +7,8 @@ import { Agent, annotate } from '../lux/Agent'
 import { Unit } from '../lux/Unit'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import Guard from '../assignments/Guard'
+import { getNeighbors } from '../helpers/helpers'
+import Miner from '../assignments/Miner'
 
 const agent = new Agent()
 
@@ -17,7 +19,7 @@ function getAssignments(turn: Turn): Assignment[] {
   for (const cluster of turn.clusters) {
     if (cluster.type === 'coal' && turn.player.researchPoints < GAME_CONSTANTS.PARAMETERS.RESEARCH_REQUIREMENTS.COAL * 0.8) continue
     if (cluster.type === 'uranium' && turn.player.researchPoints < GAME_CONSTANTS.PARAMETERS.RESEARCH_REQUIREMENTS.URANIUM * 0.8) continue
-    const perimeter = cluster.getPerimeter(turn.gameMap, false)
+    const perimeter = cluster.getPerimeter(turn.map, false)
     for (const cell of perimeter) {
       const settler = new Settler(cell.pos)
       assignments.push(settler)
@@ -30,6 +32,23 @@ function getAssignments(turn: Turn): Assignment[] {
       const cell = cluster.cells[i]
       const guard = new Guard(cell.pos)
       assignments.push(guard)
+    }
+  }
+
+  // Miner assignments
+  for (const [cityId, city] of turn.player.cities) {
+    for (const citytile of city.citytiles) {
+      const cell = turn.map.getCellByPos(citytile.pos)
+      const adjacent = getNeighbors(cell, turn.map)
+      for (const neighbor of adjacent) {
+        if (!neighbor.resource || neighbor.resource.amount === 0) continue
+        const hasCoal = neighbor.resource.type === 'coal' && turn.player.researchedCoal
+        const hasUranium = neighbor.resource.type === 'uranium' && turn.player.researchedUranium
+        if (!hasCoal && !hasUranium) continue
+        const miner = new Miner(citytile.pos)
+        assignments.push(miner)
+        break
+      }
     }
   }
 
