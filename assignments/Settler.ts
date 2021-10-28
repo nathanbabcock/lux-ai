@@ -1,4 +1,3 @@
-import { log } from '../helpers/logging'
 import Pathfinding from '../helpers/Pathfinding'
 import { PositionState } from '../helpers/StateNode'
 import Turn from '../helpers/Turn'
@@ -13,7 +12,7 @@ export default class Settler extends Assignment {
   }
 
   getAction(unit: Unit, turn: Turn): string | undefined {
-    if (!unit.canAct()) return // skip pathfinding entirely
+    if (!unit.canAct()) return turn.idle(unit) // skip pathfinding entirely
     let path: PositionState[] = []
 
     if (unit.getCargoSpaceLeft() > 0) {
