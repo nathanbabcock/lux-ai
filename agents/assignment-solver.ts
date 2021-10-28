@@ -1,4 +1,5 @@
 import Assignment from '../assignments/Assignment'
+import Builder from '../assignments/Builder'
 import Guard from '../assignments/Guard'
 import Miner from '../assignments/Miner'
 import Settler from '../assignments/Settler'
@@ -52,7 +53,7 @@ function getAssignments(turn: Turn): Assignment[] {
     }
   }
 
-  // Endgame city assignments
+  // City expansion assignments
   const nightTurns = nightTurnsLeft(turn.gameState.turn)
   for (const [cityId, city] of turn.player.cities) {
     const totalUpkeep = city.getLightUpkeep() * nightTurns
@@ -65,13 +66,10 @@ function getAssignments(turn: Turn): Assignment[] {
     const cityPerim = getCityPerimeter(city, turn.map)
     cityPerim.sort((a, b) => getCityAdjacency(b.pos, turn.map) - getCityAdjacency(a.pos, turn.map))
     for (let i = 0; i < Math.min(capacity, cityPerim.length); i++) {
-      const endgameSettler = new Settler(cityPerim[i].pos)
-      assignments.push(endgameSettler)
+      const builder = new Builder(cityPerim[i].pos)
+      assignments.push(builder)
     }
   }
-
-  // find all cities which will last until end of game (and then some)
-  // add n citytiles onto their perimeter (maybe at the spot of optimal efficiency?)
 
   return assignments
 }
