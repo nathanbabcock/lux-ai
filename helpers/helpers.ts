@@ -1,3 +1,4 @@
+import { Game } from '@lux-ai/2021-challenge'
 import { SSL_OP_LEGACY_SERVER_CONNECT } from 'constants'
 import type { GameState } from '../lux/Agent'
 import type { Cell } from '../lux/Cell'
@@ -233,4 +234,40 @@ export function getClosestCell(reference: Cell, cells: Cell[]): Cell {
     }
   }
   return closestCell
+}
+
+export function isNight(turn: number): boolean {
+  const dayLength = GAME_CONSTANTS.PARAMETERS.DAY_LENGTH
+  const cycleLength = dayLength + GAME_CONSTANTS.PARAMETERS.NIGHT_LENGTH
+  return turn % cycleLength >= dayLength
+}
+
+export function countCityTiles(game: Game, team: 0 | 1) {
+  const cityTileCount = [0, 0]
+  game.cities.forEach((city) => {
+    cityTileCount[city.team] += city.citycells.length
+  })
+  return cityTileCount[team]
+}
+
+export function nightTurnsLeft(turn: number): number {
+  const maxDays = GAME_CONSTANTS.PARAMETERS.MAX_DAYS
+  const nightLength = GAME_CONSTANTS.PARAMETERS.NIGHT_LENGTH
+  const dayLength = GAME_CONSTANTS.PARAMETERS.DAY_LENGTH
+  const cycleLength = dayLength + nightLength
+  const cyclePos = turn % cycleLength
+  let curTurn = turn
+  let nightTurns = 0
+  if (cyclePos > dayLength) {
+    const turnsTilMorning = cycleLength - cyclePos
+    curTurn += turnsTilMorning
+    nightTurns += turnsTilMorning
+  }
+
+  while (curTurn < maxDays) {
+    curTurn += dayLength + nightLength
+    nightTurns += nightLength
+  }
+
+  return nightTurns
 }

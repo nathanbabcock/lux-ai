@@ -6,7 +6,7 @@ import cloneGame from './clone-game'
 import { getClusters } from './Cluster'
 import Convert from './Convert'
 import getGameResults from './getGameResults'
-import { otherTeam } from './helpers'
+import { countCityTiles, isNight, otherTeam } from './helpers'
 import { chooseRandom } from './util'
 import uuid from './uuid'
 
@@ -554,20 +554,6 @@ export default class Abstraction {
     result += '}\n'
     return result
   }
-}
-
-export function isNight(turn: number): boolean {
-  const dayLength = GAME_CONSTANTS.PARAMETERS.DAY_LENGTH
-  const cycleLength = dayLength + GAME_CONSTANTS.PARAMETERS.NIGHT_LENGTH
-  return turn % cycleLength >= dayLength
-}
-
-export function countCityTiles(game: Game, team: 0 | 1) {
-  const cityTileCount = [0, 0]
-  game.cities.forEach((city) => {
-    cityTileCount[city.team] += city.citycells.length
-  })
-  return cityTileCount[team]
 }
 
 /** @source F:\git\Lux-Design-2021\src\logic.ts */

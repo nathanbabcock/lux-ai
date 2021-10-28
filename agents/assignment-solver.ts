@@ -1,14 +1,14 @@
 import Assignment from '../assignments/Assignment'
+import Guard from '../assignments/Guard'
+import Miner from '../assignments/Miner'
 import Settler from '../assignments/Settler'
+import { getNeighbors, nightTurnsLeft } from '../helpers/helpers'
 import hungarianMethod from '../helpers/hungarianMethod'
 import { clearLog, log } from '../helpers/logging'
 import Turn from '../helpers/Turn'
 import { Agent, annotate } from '../lux/Agent'
-import { Unit } from '../lux/Unit'
 import GAME_CONSTANTS from '../lux/game_constants.json'
-import Guard from '../assignments/Guard'
-import { getNeighbors } from '../helpers/helpers'
-import Miner from '../assignments/Miner'
+import { Unit } from '../lux/Unit'
 
 const agent = new Agent()
 
@@ -42,8 +42,8 @@ function getAssignments(turn: Turn): Assignment[] {
       const adjacent = getNeighbors(cell, turn.map)
       for (const neighbor of adjacent) {
         if (!neighbor.resource || neighbor.resource.amount === 0) continue
-        const hasCoal = neighbor.resource.type === 'coal' && turn.player.researchedCoal
-        const hasUranium = neighbor.resource.type === 'uranium' && turn.player.researchedUranium
+        const hasCoal = neighbor.resource.type === 'coal' && turn.player.researchedCoal()
+        const hasUranium = neighbor.resource.type === 'uranium' && turn.player.researchedUranium()
         if (!hasCoal && !hasUranium) continue
         const miner = new Miner(citytile.pos)
         assignments.push(miner)
@@ -51,6 +51,9 @@ function getAssignments(turn: Turn): Assignment[] {
       }
     }
   }
+
+  // find all cities which will last until end of game (and then some)
+  // add n citytiles onto their perimeter (maybe at the spot of optimal efficiency?)
 
   return assignments
 }
