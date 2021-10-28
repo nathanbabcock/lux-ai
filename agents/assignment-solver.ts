@@ -25,7 +25,6 @@ function getAssignments(turn: Turn): Assignment[] {
 
     // Cluster guard assignments
     const numGuards = Math.max(cluster.cells.length - perimeter.length, 0)
-    log(`numGuards ${numGuards}`)
     for (let i = 0; i < numGuards; i++) {
       // Which specific cells will be guarded is arbitrary AND deterministic (stable across turns)
       const cell = cluster.cells[i]

@@ -57,14 +57,14 @@ export default class Turn {
     this.director.setClusters(this.clusters)
   }
 
-  getClosestResourceTile(unit: Unit, type?: 'wood' | 'coal' | 'uranium' | undefined): Cell | null {
+  getClosestResourceTile(unit: Unit, pos: Position = unit.pos, type?: 'wood' | 'coal' | 'uranium' | undefined): Cell | null {
     let closestResourceTile: Cell = null
     let closestDist = Infinity
     this.resourceTiles.forEach((cell) => {
       if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.COAL && !this.player.researchedCoal()) return
       if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.URANIUM && !this.player.researchedUranium()) return
       if (type && cell.resource.type !== type) return
-      const dist = cell.pos.distanceTo(unit.pos)
+      const dist = cell.pos.distanceTo(pos)
       if (dist < closestDist) {
         closestDist = dist
         closestResourceTile = cell

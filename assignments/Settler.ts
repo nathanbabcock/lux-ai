@@ -16,7 +16,7 @@ export default class Settler extends Assignment {
     let path: PositionState[] = []
 
     if (unit.getCargoSpaceLeft() > 0) {
-      const closestResource = turn.getClosestResourceTile(unit, 'wood') // only use wood for building, for now
+      const closestResource = turn.getClosestResourceTile(unit, this.target, 'wood') // only use wood for building, for now
       if (!closestResource) return
 
       const empty = unit.getCargoSpaceLeft() === 100 // If empty, you can safely move over friendly citytiles
@@ -37,7 +37,7 @@ export default class Settler extends Assignment {
   getCost(unit: Unit, turn: Turn): number {
     // Must gather resources first
     if (unit.getCargoSpaceLeft() > 0) {
-      const closestResource = turn.getClosestResourceTile(unit, 'wood') // only use wood for building, for now
+      const closestResource = turn.getClosestResourceTile(unit, this.target, 'wood') // only use wood for building, for now
       if (!closestResource) return Number.MAX_SAFE_INTEGER
       const resourceDist = unit.pos.distanceTo(closestResource.pos)
       const cityDist = closestResource.pos.distanceTo(this.target)

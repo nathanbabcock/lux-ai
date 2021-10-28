@@ -15,7 +15,7 @@ export default class Guard extends Assignment {
 
     const dist = unit.pos.distanceTo(this.target)
     if (dist === 0) return turn.idle(unit)
-    const path = Pathfinding.simple_astar(unit, this.target, turn, true)
+    const path = Pathfinding.simple_astar(unit, this.target, turn, false)
 
     if (!path || path.length <= 1)
       return
