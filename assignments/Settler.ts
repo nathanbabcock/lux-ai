@@ -13,7 +13,7 @@ export default class Settler extends Assignment {
   }
 
   getAction(unit: Unit, turn: Turn): string | undefined {
-    if (!unit.canAct()) return turn.idle(unit) // skip pathfinding entirely
+    if (!unit.canAct()) return turn.wait(unit) // skip pathfinding entirely
     let path: PositionState[] = []
 
     if (unit.getCargoSpaceLeft() > 0) {

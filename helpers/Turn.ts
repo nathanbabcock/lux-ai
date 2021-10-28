@@ -88,6 +88,10 @@ export default class Turn {
     return false
   }
 
+  idle(unit: Unit): string {
+    return this.moveWithCollisionAvoidance(unit, GAME_CONSTANTS.DIRECTIONS.CENTER)
+  }
+
   wait(unit: Unit): undefined {
     this.otherUnitMoves.push(unit.pos)
     return undefined
@@ -103,16 +107,16 @@ export default class Turn {
 
   moveWithCollisionAvoidance(unit: Unit, dir: string): string | undefined {
     const destination = unit.pos.translate(dir, 1)
+    const cell = this.map.getCellByPos(destination)
+    const inCity = cell.citytile && cell.citytile.team === unit.team
     const teamUnitCollision = this.otherUnitMoves
       .some((pos) => pos.equals(destination))
-    const cityCollision = this.gameState.players
-      .map(player => Array.from(player.cities.values())).flat() 
+    const cityCollision = Array.from(this.opponent.cities.values())
       .map(city => city.citytiles).flat()
       .some(citytile => citytile.pos.equals(destination))
-    if (teamUnitCollision || cityCollision)
-      return this.sidestep(unit, dir) || this.wait(unit)
-    else
-      return this.moveUnit(unit, dir)
+    if ((teamUnitCollision && !inCity) || cityCollision)
+      return this.wait(unit)
+    return this.moveUnit(unit, dir)
   }
 
   moveTo(unit: Unit, pos: Position): string | undefined {
@@ -132,10 +136,6 @@ export default class Turn {
     this.director.resourcePlans.push(closestResourceTile.pos)
     const dir = unit.pos.directionTo(closestResourceTile.pos)
     return this.moveWithCollisionAvoidance(unit, dir)
-  }
-
-  idle(unit: Unit): string {
-    return this.moveWithCollisionAvoidance(unit, GAME_CONSTANTS.DIRECTIONS.CENTER)
   }
 
   /**
@@ -186,9 +186,10 @@ export default class Turn {
     this.player.cities.forEach((city) => {
       city.citytiles.forEach((citytile) => {
         if (citytile.cooldown >= 1) return
-        if (this.player.units.length + unitsSpawned < this.player.cityTileCount)
+        if (this.player.units.length + unitsSpawned < this.player.cityTileCount) {
           actions.push(citytile.buildWorker())
-        else
+          unitsSpawned++
+        } else
           actions.push(citytile.research())
       })
     })

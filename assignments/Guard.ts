@@ -12,10 +12,10 @@ export default class Guard extends Assignment {
   }
 
   getAction(unit: Unit, turn: Turn): string | undefined {
-    if (!unit.canAct()) return turn.idle(unit) // skip pathfinding entirely
+    if (!unit.canAct()) return turn.wait(unit) // skip pathfinding entirely
 
     const dist = unit.pos.distanceTo(this.target)
-    if (dist === 0) return turn.idle(unit)
+    if (dist === 0) return turn.wait(unit)
     const path = Pathfinding.simple_astar(unit, this.target, turn, false)
 
     if (!path || path.length <= 1)
@@ -26,7 +26,7 @@ export default class Guard extends Assignment {
   }
 
   getCost(unit: Unit, turn: Turn): number {
-    return unit.pos.distanceTo(this.target)
+    return unit.pos.distanceTo(this.target) + 2
   }
 
   static getAssignments(turn: Turn): Guard[] {
