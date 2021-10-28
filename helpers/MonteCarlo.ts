@@ -1,5 +1,5 @@
 import { LuxDesignLogic } from '@lux-ai/2021-challenge'
-import SettlerAgent from './Settler'
+import SettlerAgent from './SettlerAgent'
 import { GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { GameMap } from '../lux/GameMap'

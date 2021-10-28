@@ -1,6 +1,6 @@
 import { clearLog, log } from '../helpers/logging'
 import MonteCarlo, { Mission, TreeNode } from '../helpers/MonteCarlo'
-import SettlerAgent from '../helpers/Settler'
+import SettlerAgent from '../helpers/SettlerAgent'
 import Sim from '../helpers/Sim'
 import { chooseRandom } from '../helpers/util'
 import { Agent, annotate } from '../lux/Agent'
