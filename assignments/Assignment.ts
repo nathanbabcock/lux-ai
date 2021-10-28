@@ -19,4 +19,8 @@ export default class Assignment {
   getCost(unit: Unit, turn: Turn): number {
     return unit.pos.distanceTo(this.target)
   }
+
+  getAction(unit: Unit, turn: Turn): string | undefined {
+    return
+  }
 }

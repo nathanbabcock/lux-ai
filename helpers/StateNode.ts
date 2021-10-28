@@ -11,6 +11,14 @@ export abstract class StateNode {
   abstract equals(other: StateNode): boolean
 }
 
+export class PositionState extends StateNode {
+  equals(other: PositionState) {
+    return this.pos.equals(other.pos)
+  }
+
+  constructor(public pos: Position) { super() }
+}
+
 export class MovementState extends StateNode {
   constructor(
     public pos: Position,

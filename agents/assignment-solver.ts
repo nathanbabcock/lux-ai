@@ -1,9 +1,10 @@
 import Assignment from '../assignments/Assignment'
 import Settler from '../assignments/Settler'
+import hungarianMethod from '../helpers/hungarianMethod'
 import { clearLog, log } from '../helpers/logging'
 import Turn from '../helpers/Turn'
 import { Agent } from '../lux/Agent'
-import hungarianMethod from '../helpers/hungarianMethod'
+import { Unit } from '../lux/Unit'
 
 const agent = new Agent()
 
@@ -22,6 +23,56 @@ function getAssignments(turn: Turn): Assignment[] {
   return assignments
 }
 
+function createCostMatrix(
+  units: Unit[],
+  assignments: Assignment[],
+  turn: Turn,
+): number[][] {
+  const costMatrix: number[][] = []
+
+  for (const unit of units) {
+    const row = []
+    for (const assignment of assignments) {
+      const cost = assignment.getCost(unit, turn)
+      row.push(cost)
+    }
+    costMatrix.push(row)
+  }
+
+  return costMatrix
+}
+
+/** If an array is more convenient, switch to that instead */
+function getAssignmentsMap(
+  solvedAssignments: number[][],
+  units: Unit[],
+  allAssignments: Assignment[],
+): Map<Unit, Assignment> {
+  const assignments = new Map<Unit, Assignment>()
+  for (const [unitIndex, assignmentIndex] of solvedAssignments) {
+    const unit = units[unitIndex]
+    const assignment = allAssignments[assignmentIndex]
+    assignments.set(unit, assignment)
+  }
+  return assignments
+}
+
+function getAssignmentActions(
+  solvedAssignments: number[][],
+  units: Unit[],
+  assignments: Assignment[],
+  turn: Turn
+): string[] {
+  const actions: string[] = []
+  for (const [unitIndex, assignmentIndex] of solvedAssignments) {
+    const unit = units[unitIndex]
+    const assignment = assignments[assignmentIndex]
+    const action = assignment.getAction(unit, turn)
+    if (action) actions.push(action)
+  }
+  return actions
+}
+
 async function main() {
   clearLog()
   log('=======================')
@@ -33,43 +84,16 @@ async function main() {
     log(`=== TURN ${gameState.turn} ===`)
     const turn = new Turn(gameState)
     const actions = turn.actions
-
-    const assignments = getAssignments(turn)
+    const allAssignments = getAssignments(turn)
     const units = turn.player.units
-
-    // if (gameState.turn === 0) {
-    //   for (const assignment of assignments) {
-    //     log(`${assignment.type} ${assignment.target.x} ${assignment.target.y}`)
-    //     for (const unit of units) {
-    //       log(`> cost(${unit.id}) = ${assignment.getCost(unit, turn)}`)
-    //     }
-    //   }
-    // }
-
-    const costMatrix: number[][] = []
-
-    for (const unit of units) {
-      const row = []
-      for (const assignment of assignments) {
-        const cost = assignment.getCost(unit, turn)
-        row.push(cost)
-      }
-      costMatrix.push(row)
-    }
-
+    const costMatrix = createCostMatrix(units, allAssignments, turn)
     const start = new Date().getTime()
     const solvedAssignments = hungarianMethod(costMatrix)
     const time = new Date().getTime() - start
-
-    if (gameState.turn === 0) {
-      log(`${solvedAssignments.length} optimal assignments found in ${time}ms`)
-      for (const [unitIndex, assignmentIndex] of solvedAssignments) {
-        const unit = units[unitIndex]
-        const assignment = assignments[assignmentIndex]
-        log(`> ${unit.id} -> ${assignment.type} ${assignment.target.x} ${assignment.target.y} (cost=${costMatrix[unitIndex][assignmentIndex]})`)
-      }
-    }
-
+    log(`${solvedAssignments.length} optimal assignments found in ${time}`)
+    const assignmentActions = getAssignmentActions(solvedAssignments, units, allAssignments, turn) 
+    actions.push(...assignmentActions)
+    actions.push(...turn.autoCities())
     return actions
   })
 }

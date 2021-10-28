@@ -9,7 +9,8 @@ import DirectorV2 from './DirectorV2'
 import { getResourceAdjacency } from './helpers'
 import { log } from './logging'
 import Sim from './Sim'
-import { MovementState, StateMap, StateNode, UnitState } from './StateNode'
+import { MovementState, PositionState, StateMap, StateNode, UnitState } from './StateNode'
+import Turn from './Turn'
 
 export type MetaPathNode = {
   pos: Position
@@ -43,143 +44,6 @@ export default class Pathfinding {
     return (Pathfinding.manhattan(startPos, goalPos) * 2) // 1 turn of movement, 1 turn of cooldown, per tile
       + (startCanAct ? 0 : 1) // 1 turn of initial cooldown if can't act
       - (goalCanAct ? 0 : 1) // Whether to wait for cooldown on goal tile
-  }
-
-  static async meta_astar_build(
-    startUnit: Unit,
-    startGameState: GameState,
-    sim: Sim,
-    director?: DirectorV2,
-  ): Promise<MovementState[] | null> {
-    const destinations = new Map<Cell, MetaPathNode>()
-    const map = startGameState.map
-    const player = startGameState.players[startUnit.team]
-    for (let y = 0; y < map.height; y++) {
-      for (let x = 0; x < map.width; x++) {
-        const cell = map.getCell(x, y)
-        if (cell.resource && cell.resource.amount > 0) continue
-        if (cell.citytile) continue
-        if (director && director.getBuildAssignment(x, y)) continue
-        destinations.set(cell, {
-          pos: cell.pos,
-          estimatedDistance: Pathfinding.turns(startUnit.pos, startUnit.canAct(), cell.pos, true),
-          actualDistance: undefined,
-          detours: new Map<Cell, MetaPathNode>(),
-        })
-      }
-    }
-
-    Array.from(destinations.values()).forEach(dest => {
-      for (let y = 0; y < map.height; y++) {
-        for (let x = 0; x < map.width; x++) {
-          const cell = map.getCell(x, y)
-          if (!cell.resource) continue
-          if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.COAL && !player.researchedCoal) continue
-          if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.URANIUM && !player.researchedUranium) continue
-          dest.detours.set(cell, {
-            pos: cell.pos,
-            parent: dest,
-            estimatedDistance: Pathfinding.turns(startUnit.pos, startUnit.canAct(), cell.pos, true)
-              + Pathfinding.turns(cell.pos, true, dest.pos, true),
-            actualDistance: undefined,
-          })
-        }
-      }
-    })
-
-    const getNextNodeToCheck = () => {
-      const uncheckedDestinations = Array.from(destinations.values())
-        .filter(dest => dest.actualDistance === undefined)
-        .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
-      const closestUncheckedDest = uncheckedDestinations.length === 0 ? undefined : uncheckedDestinations[0]
-      
-      const uncheckedDetours = Array.from(destinations.values())
-        .map(dest => Array.from(dest.detours.values())).flat()
-        .filter(detour => detour.actualDistance === undefined)
-        .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
-      const closestUncheckedDetour = uncheckedDetours.length === 0 ? undefined : uncheckedDetours[0]
-      
-      if (!closestUncheckedDest && !closestUncheckedDetour)
-        return null
-      else if (!closestUncheckedDest || closestUncheckedDest.estimatedDistance > closestUncheckedDetour.estimatedDistance)
-        return closestUncheckedDetour
-      else
-        return closestUncheckedDest
-    }
-
-    const MAX_TRIES = Infinity
-    let tries = 0
-    let curBestSolution: null | MetaPathNode = null
-    let next: MetaPathNode
-    while (next = getNextNodeToCheck()) {
-      if (tries > MAX_TRIES)
-        log(`astar_build bailout(${MAX_TRIES})`)
-
-      if (curBestSolution && (tries > MAX_TRIES || next.estimatedDistance >= curBestSolution.actualDistance)) {
-        const path = curBestSolution.path
-
-        const wait = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, true)
-        wait.action = startUnit.move('c')
-        path.push(wait)
-
-        const build = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, false)
-        build.action = startUnit.buildCity()
-        path.push(build)
-
-        return path
-      }
-
-      if (tries > MAX_TRIES)
-        return null
-
-      tries++
-
-      let pathfindingResult: PathfindingResult<MovementState>
-      if (next.parent) {
-        const pathPart1 = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim, director)
-        if (!pathPart1) {
-          next.actualDistance = Infinity
-          continue
-        }
-
-        const newGameState = pathPart1.gameState
-        const newUnit = newGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
-        const pathPart2 = await Pathfinding.astar_move(newUnit, next.parent.pos, newGameState, sim, director)
-
-        if (!pathPart2) {
-          next.actualDistance = Infinity
-          continue
-        }
-
-        next.path = [
-          ...pathPart1.path,
-          ...pathPart2.path,
-        ]
-        next.actualDistance = pathPart1.path.length + pathPart2.path.length
-
-        const endGameState = pathPart2.gameState
-        const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
-        next.cargoFull = endUnit.getCargoSpaceLeft() === 0
-      } else {
-        pathfindingResult = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim, director)
-        if (!pathfindingResult) {
-          next.actualDistance = Infinity
-          continue
-        }
-        
-        next.path = pathfindingResult.path
-        next.actualDistance = pathfindingResult.path.length
-
-        const endGameState = pathfindingResult.gameState
-        const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
-        next.cargoFull = endUnit.getCargoSpaceLeft() === 0
-      }
-
-      if (next.cargoFull && (!curBestSolution || next.actualDistance < curBestSolution.actualDistance))
-        curBestSolution = next
-    }
-
-    return curBestSolution ? curBestSolution.path : null
   }
 
   static closest_empty_tile(state: UnitState, map: GameMap): number {
@@ -254,6 +118,82 @@ export default class Pathfinding {
       return Pathfinding.closest_empty_tile(state, map)
     else
       return Pathfinding.closest_resource(state, map)
+  }
+
+  /**
+   * Extremely basic A* search on the grid map only,
+   * with no collision avoidance or cooldown simulation.
+   * @param avoidCityTiles default `true`
+   */
+  static simple_astar(
+    unit: Unit,
+    goal: Position,
+    turn: Turn,
+    avoidCityTiles: boolean = true,
+  ): PositionState[] | null {
+    /** Simple manhattan distance */
+    const h = (start: PositionState, goal: PositionState) =>
+      start.pos.distanceTo(goal.pos)
+
+    const startState = new PositionState(unit.pos)
+    const goalState = new PositionState(goal)
+    const openSet = [startState]
+
+    const gScore = new StateMap()
+    gScore.set(startState, 0)
+
+    const fScore = new StateMap()
+    fScore.set(startState, h(startState, goalState))
+
+    const MAX_TRIES = 500
+    let tries = 0
+    while (openSet.length > 0) {
+      tries++
+
+      if (tries > MAX_TRIES) {
+        log(`A* pathfinding hit ${MAX_TRIES} iteration limit`)
+        return null
+      }
+
+      let cur = openSet[0]
+      openSet.forEach(node => {
+        if (fScore.get(node) < fScore.get(cur)) cur = node
+      })
+
+      if (cur.equals(goalState))
+        return Pathfinding.reconstruct_path(cur)
+
+      openSet.splice(openSet.indexOf(cur), 1)
+      
+      const directions = ['n', 'e', 's', 'w']
+      for (const dir of directions) {
+        const destination = cur.pos.translate(dir, 1)
+        if (destination.x < 0 || destination.y < 0) continue
+        if (destination.x >= turn.gameMap.width) continue
+        if (destination.y >= turn.gameMap.width) continue
+        const cell = turn.gameMap.getCell(destination.x, destination.y)
+        if (cell.citytile && cell.citytile.team !== unit.team) continue // can't move onto enemy city tiles
+        if (cell.citytile && avoidCityTiles) continue // avoid all city tiles if necessary
+        if (turn.opponent.units.find(unit => unit.pos.equals(destination))) continue // can't move onto enemy units (even if they might move away)
+        // avoid collisions with other units
+        // might need to know the turn as well as the position to do this
+        // ...or skip that, and keep this *extremely* simple until proven necessary?
+
+        const neighbor = new PositionState(destination)
+        neighbor.cameFrom = cur
+
+        const tentative_gScore = gScore.get(cur) + h(cur, neighbor)
+        //console.log(`gScore(${neighbor.pos.x}, ${neighbor.pos.y}, ${neighbor.canAct}) = ${tentative_gScore}`)
+        if (tentative_gScore < gScore.get(neighbor) || !gScore.has(neighbor)) {
+          gScore.set(neighbor, tentative_gScore)
+          fScore.set(neighbor, tentative_gScore + h(neighbor, goalState))
+          if (!openSet.find(node => node.equals(neighbor)))
+            openSet.push(neighbor)
+        }
+      }
+    }
+
+    return null
   }
 
   static async astar_build(
@@ -462,5 +402,146 @@ export default class Pathfinding {
     }
 
     return null
+  }
+
+  /**
+   * @deprecated
+   * Works (believe it or not) but crashes when there are too many units in a small area
+   */
+  static async meta_astar_build(
+    startUnit: Unit,
+    startGameState: GameState,
+    sim: Sim,
+    director?: DirectorV2,
+  ): Promise<MovementState[] | null> {
+    const destinations = new Map<Cell, MetaPathNode>()
+    const map = startGameState.map
+    const player = startGameState.players[startUnit.team]
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const cell = map.getCell(x, y)
+        if (cell.resource && cell.resource.amount > 0) continue
+        if (cell.citytile) continue
+        if (director && director.getBuildAssignment(x, y)) continue
+        destinations.set(cell, {
+          pos: cell.pos,
+          estimatedDistance: Pathfinding.turns(startUnit.pos, startUnit.canAct(), cell.pos, true),
+          actualDistance: undefined,
+          detours: new Map<Cell, MetaPathNode>(),
+        })
+      }
+    }
+
+    Array.from(destinations.values()).forEach(dest => {
+      for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+          const cell = map.getCell(x, y)
+          if (!cell.resource) continue
+          if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.COAL && !player.researchedCoal) continue
+          if (cell.resource.type === GAME_CONSTANTS.RESOURCE_TYPES.URANIUM && !player.researchedUranium) continue
+          dest.detours.set(cell, {
+            pos: cell.pos,
+            parent: dest,
+            estimatedDistance: Pathfinding.turns(startUnit.pos, startUnit.canAct(), cell.pos, true)
+              + Pathfinding.turns(cell.pos, true, dest.pos, true),
+            actualDistance: undefined,
+          })
+        }
+      }
+    })
+
+    const getNextNodeToCheck = () => {
+      const uncheckedDestinations = Array.from(destinations.values())
+        .filter(dest => dest.actualDistance === undefined)
+        .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
+      const closestUncheckedDest = uncheckedDestinations.length === 0 ? undefined : uncheckedDestinations[0]
+      
+      const uncheckedDetours = Array.from(destinations.values())
+        .map(dest => Array.from(dest.detours.values())).flat()
+        .filter(detour => detour.actualDistance === undefined)
+        .sort((a, b) => a.estimatedDistance - b.estimatedDistance)
+      const closestUncheckedDetour = uncheckedDetours.length === 0 ? undefined : uncheckedDetours[0]
+      
+      if (!closestUncheckedDest && !closestUncheckedDetour)
+        return null
+      else if (!closestUncheckedDest || closestUncheckedDest.estimatedDistance > closestUncheckedDetour.estimatedDistance)
+        return closestUncheckedDetour
+      else
+        return closestUncheckedDest
+    }
+
+    const MAX_TRIES = Infinity
+    let tries = 0
+    let curBestSolution: null | MetaPathNode = null
+    let next: MetaPathNode
+    while (next = getNextNodeToCheck()) {
+      if (tries > MAX_TRIES)
+        log(`astar_build bailout(${MAX_TRIES})`)
+
+      if (curBestSolution && (tries > MAX_TRIES || next.estimatedDistance >= curBestSolution.actualDistance)) {
+        const path = curBestSolution.path
+
+        const wait = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, true)
+        wait.action = startUnit.move('c')
+        path.push(wait)
+
+        const build = new MovementState(curBestSolution.path[curBestSolution.path.length - 1].pos, false)
+        build.action = startUnit.buildCity()
+        path.push(build)
+
+        return path
+      }
+
+      if (tries > MAX_TRIES)
+        return null
+
+      tries++
+
+      let pathfindingResult: PathfindingResult<MovementState>
+      if (next.parent) {
+        const pathPart1 = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim, director)
+        if (!pathPart1) {
+          next.actualDistance = Infinity
+          continue
+        }
+
+        const newGameState = pathPart1.gameState
+        const newUnit = newGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+        const pathPart2 = await Pathfinding.astar_move(newUnit, next.parent.pos, newGameState, sim, director)
+
+        if (!pathPart2) {
+          next.actualDistance = Infinity
+          continue
+        }
+
+        next.path = [
+          ...pathPart1.path,
+          ...pathPart2.path,
+        ]
+        next.actualDistance = pathPart1.path.length + pathPart2.path.length
+
+        const endGameState = pathPart2.gameState
+        const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+        next.cargoFull = endUnit.getCargoSpaceLeft() === 0
+      } else {
+        pathfindingResult = await Pathfinding.astar_move(startUnit, next.pos, startGameState, sim, director)
+        if (!pathfindingResult) {
+          next.actualDistance = Infinity
+          continue
+        }
+        
+        next.path = pathfindingResult.path
+        next.actualDistance = pathfindingResult.path.length
+
+        const endGameState = pathfindingResult.gameState
+        const endUnit = endGameState.players[startUnit.team].units.find(unit => unit.id === startUnit.id)
+        next.cargoFull = endUnit.getCargoSpaceLeft() === 0
+      }
+
+      if (next.cargoFull && (!curBestSolution || next.actualDistance < curBestSolution.actualDistance))
+        curBestSolution = next
+    }
+
+    return curBestSolution ? curBestSolution.path : null
   }
 }
