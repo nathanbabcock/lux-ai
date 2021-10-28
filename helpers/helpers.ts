@@ -271,3 +271,33 @@ export function nightTurnsLeft(turn: number): number {
 
   return nightTurns
 }
+
+/**
+ * Get all cells adjacent to a citytile in this city, but not a part of the city itself
+ * @see Cluster.getPerimeter()
+*/
+export function getCityPerimeter(city: City, map: GameMap): Cell[] {
+  const perimeter: Cell[] = []
+  city.citytiles.forEach(citytile => {
+    const cell = map.getCellByPos(citytile.pos)
+    const neighbors = getNeighbors(cell, map)
+    neighbors.forEach(neighbor => {
+      if (city.citytiles.find(cell => cell.pos.equals(neighbor.pos))) return
+      if (perimeter.find(cell => cell.pos.equals(neighbor.pos))) return
+      if (neighbor.citytile) return
+      if (neighbor.resource) return
+      perimeter.push(neighbor)
+    })
+  })
+  return perimeter
+}
+
+export function getCityAdjacency(pos: Position, map: GameMap): number {
+  const cell = map.getCellByPos(pos)
+  const neighbors = getNeighbors(cell, map)
+  let adjacency = 0
+  for (const neighbor of neighbors) {
+    if (neighbor.citytile) adjacency++
+  }
+  return adjacency
+}

@@ -2,7 +2,7 @@ import Assignment from '../assignments/Assignment'
 import Guard from '../assignments/Guard'
 import Miner from '../assignments/Miner'
 import Settler from '../assignments/Settler'
-import { getNeighbors, nightTurnsLeft } from '../helpers/helpers'
+import { getCityAdjacency, getCityPerimeter, getNeighbors, nightTurnsLeft } from '../helpers/helpers'
 import hungarianMethod from '../helpers/hungarianMethod'
 import { clearLog, log } from '../helpers/logging'
 import Turn from '../helpers/Turn'
@@ -49,6 +49,24 @@ function getAssignments(turn: Turn): Assignment[] {
         assignments.push(miner)
         break
       }
+    }
+  }
+
+  // Endgame city assignments
+  const nightTurns = nightTurnsLeft(turn.gameState.turn)
+  for (const [cityId, city] of turn.player.cities) {
+    const totalUpkeep = city.getLightUpkeep() * nightTurns
+
+    const surplus = city.fuel - totalUpkeep
+    const cityTileUpkeep = GAME_CONSTANTS.PARAMETERS.LIGHT_UPKEEP.CITY - 5 // minimum 1-tile adajacency bonus
+    const capacity = Math.max(Math.round(surplus / cityTileUpkeep), 0)
+    if (capacity <= 0) continue
+
+    const cityPerim = getCityPerimeter(city, turn.map)
+    cityPerim.sort((a, b) => getCityAdjacency(b.pos, turn.map) - getCityAdjacency(a.pos, turn.map))
+    for (let i = 0; i < Math.min(capacity, cityPerim.length); i++) {
+      const endgameSettler = new Settler(cityPerim[i].pos)
+      assignments.push(endgameSettler)
     }
   }
 
@@ -122,7 +140,6 @@ function annotateAssignments(
   }
   return actions
 }
-
 
 async function main() {
   clearLog()
