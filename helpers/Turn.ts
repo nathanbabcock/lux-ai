@@ -1,5 +1,4 @@
 import { Game } from '@lux-ai/2021-challenge'
-import { turn } from '../agents/tree-search'
 import { annotate, GameState } from '../lux/Agent'
 import { Cell } from '../lux/Cell'
 import { GameMap } from '../lux/GameMap'
