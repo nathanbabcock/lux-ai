@@ -1,5 +1,5 @@
 import { SerializedState } from '@lux-ai/2021-challenge'
-import { getResourcesSerialized } from './helpers'
+import { getResourcesSerialized, otherTeam } from './helpers'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
 import { AttributionGraph } from './CreditAssignment'
@@ -23,21 +23,15 @@ export type AugReplay = {
 }
 
 export default class LightLevels {
-  static printLightMap(map: AugMap, channel: keyof AugMapCell) {
-    for (let y = 0; y < map.length; y++) {
-      let row = ''
-      for (let x = 0; x < map[y].length; x++) {
-        row += new String(map[y][x][channel]).padStart(5) + ' '
-      }
-      console.log(row)
-    }
-  }
-
-  static computeAll(serializedState: SerializedState, augMap: AugMap) {
+  static computeAll(serializedState: SerializedState, augMap: AugMap, team: 0 | 1): void {
     LightLevels.computeResources(serializedState, augMap)
     LightLevels.computeWood(serializedState, augMap)
     LightLevels.computeCoal(serializedState, augMap)
     LightLevels.computeUranium(serializedState, augMap)
+    LightLevels.computeFriendlyUnits(serializedState, augMap, team)
+    LightLevels.computeEnemyUnits(serializedState, augMap, otherTeam(team))
+    LightLevels.computeFriendlyCityTiles(serializedState, augMap, team)
+    LightLevels.computeEnemyCityTiles(serializedState, augMap, otherTeam(team))
   }
 
   /** Computes and writes all resource light level data into the given AugMap */
@@ -81,6 +75,81 @@ export default class LightLevels {
     LightLevels.computeSpecificResource(serializedState, augMap, 'uranium', 'uraniumLevel')
   }
 
+  static computeFriendlyUnits(serializedState: SerializedState, augMap: AugMap, team: 0 | 1): void {
+    LightLevels.computeUnits(serializedState, augMap, team, 'friendlyUnitLevel')
+  }
+
+  static computeEnemyUnits(serializedState: SerializedState, augMap: AugMap, enemyTeam: 0 | 1): void {
+    LightLevels.computeUnits(serializedState, augMap, enemyTeam, 'enemyUnitLevel')
+  }
+
+  static computeUnits(
+    serializedState: SerializedState,
+    augMap: AugMap,
+    team: number,
+    channel: keyof AugMapCell,
+  ): void {
+    const width = augMap.length
+    const units = Object.values(serializedState.teamStates[team as 0 | 1].units)
+
+    for (const unit of units) {
+      const brightness = 500 // arbitrary flat number
+      const luminosity = brightness
+      const unitPos = new Position(unit.x, unit.y)
+
+      for (let y = 0; y < width; y++) {
+        for (let x = 0; x < width; x++) {
+          const pos = new Position(x, y)
+          const augCell = augMap[y][x]
+          const distance = pos.distanceTo(unitPos)
+          const attenuation = -100 * distance // linear, proportional to cost of building city
+          const curLightLevel = augCell[channel]
+          const newLightLevel = Math.max(curLightLevel + luminosity + attenuation, 0, curLightLevel)
+          augCell[channel] = newLightLevel
+        }
+      }
+    }
+  }
+
+  static computeFriendlyCityTiles(serializedState: SerializedState, augMap: AugMap, team: 0 | 1) {
+    LightLevels.computeCityTiles(serializedState, augMap, team, 'friendlyCityLevel')
+  }
+
+  static computeEnemyCityTiles(serializedState: SerializedState, augMap: AugMap, enemyTeam: 0 | 1) {
+    LightLevels.computeCityTiles(serializedState, augMap, enemyTeam, 'enemyCityLevel')
+  }
+
+  static computeCityTiles(
+    serializedState: SerializedState,
+    augMap: AugMap,
+    team: 0 | 1,
+    channel: keyof AugMapCell,
+  ): void {
+    const width = augMap.length
+    const cities = Object.values(serializedState.cities)
+      .filter(city => city.team === team)
+
+    for (const city of cities) {
+      for (const cityTile of city.cityCells) {
+        const brightness = 1
+        const luminosity = 100 + brightness * city.fuel / city.cityCells.length
+        const cityTilePos = new Position(cityTile.x, cityTile.y)
+
+        for (let y = 0; y < width; y++) {
+          for (let x = 0; x < width; x++) {
+            const pos = new Position(x, y)
+            const augCell = augMap[y][x]
+            const distance = pos.distanceTo(cityTilePos)
+            const attenuation = -100 * distance // linear, proportional to cost of building city
+            const curLightLevel = augCell[channel]
+            const newLightLevel = Math.max(curLightLevel + luminosity + attenuation, 0, curLightLevel)
+            augCell[channel] = newLightLevel
+          }
+        }
+      }
+    }
+  }
+
   static computeSpecificResource(
     serializedState: SerializedState,
     augMap: AugMap,
@@ -106,6 +175,16 @@ export default class LightLevels {
           augCell[channel] = newLightLevel
         }
       }
+    }
+  }
+
+  static printLightMap(map: AugMap, channel: keyof AugMapCell) {
+    for (let y = 0; y < map.length; y++) {
+      let row = ''
+      for (let x = 0; x < map[y].length; x++) {
+        row += new String(Math.round(map[y][x][channel])).padStart(5) + ' '
+      }
+      console.log(row)
     }
   }
 }

@@ -23,7 +23,8 @@ export function parseKaggleReplay(replay: KaggleReplay): AugReplay {
     const width = obs.width
     const serializedState = parseKaggleObs(obs)
     const augMap = initAugMap(width)
-    LightLevels.computeAll(serializedState, augMap)
+    const team = 0 // arbitrary
+    LightLevels.computeAll(serializedState, augMap, team)
     CreditAssignment.computeStep(step, serializedState, augReplay.attributionGraph)
 
     augReplay.turns.push(augMap)
@@ -76,12 +77,24 @@ function main() {
     console.log('URANIUM:')
     LightLevels.printLightMap(turn, 'uraniumLevel')
 
+    console.log('FRIENDLY UNITS:')
+    LightLevels.printLightMap(turn, 'friendlyUnitLevel')
+
+    console.log('ENEMY UNITS:')
+    LightLevels.printLightMap(turn, 'enemyUnitLevel')
+
+    console.log('FRIENDLY CITIES:')
+    LightLevels.printLightMap(turn, 'friendlyCityLevel')
+
+    console.log('ENEMY CITIES:')
+    LightLevels.printLightMap(turn, 'enemyCityLevel')
+
     console.log()
-    if (i > 0) break
+    // if (i > 0) break
   }
 
-  console.log('Final attribution graph with rewards:')
-  augReplay.attributionGraph.print()
+  // console.log('Final attribution graph with rewards:')
+  // augReplay.attributionGraph.print()
 }
 
 main()

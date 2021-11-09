@@ -29,6 +29,37 @@ export class AttributionGraph {
 
   nextCityTileId: number = 0
 
+  /**
+   * Since citytile IDs are artificial,
+   * use this method to find one by position
+   * 
+   * In the case of multiple citytiles re-built on the same position,
+   * it chooses the latest added one (i.e. the one with the highest id)
+   */
+   getCityTile(x: number, y: number): CityTileAttribution | null {
+    return Object.values(this.cityTiles).reverse().find(citytile => citytile.pos.x === x && citytile.pos.y === y)
+  }
+
+  addCityTile(x: number, y: number, parent: UnitAttribution | null = null): CityTileAttribution {
+    const cityTileId = `ct_${this.nextCityTileId++}`
+    const cityTile = this.cityTiles[cityTileId] = {
+      parent,
+      reward: 0,
+      pos: new Position(x, y),
+      id: cityTileId,
+    }
+    return cityTile
+  }
+
+  addUnit(id: string, parent: CityTileAttribution | null = null): UnitAttribution {
+    const unit = this.units[id] = {
+      parent,
+      reward: 0,
+      id,
+    }
+    return unit
+  }
+
   print() {
     console.log('Units:')
     for (const unitId in this.units) {
@@ -41,17 +72,6 @@ export class AttributionGraph {
       const cityTile = this.cityTiles[cityTileId]
       console.log(`• ${cityTileId} (${cityTile.pos.x}, ${cityTile.pos.y}): parent = ${cityTile.parent === null ? 'null' : cityTile.parent.id}, reward = ${cityTile.reward}`)
     }
-  }
-
-  /**
-   * Since citytile IDs are artificial,
-   * use this method to find one by position
-   * 
-   * In the case of multiple citytiles re-built on the same position,
-   * it chooses the latest added one (i.e. the one with the highest id)
-   */
-  getCityTile(x: number, y: number): CityTileAttribution | null {
-    return Object.values(this.cityTiles).reverse().find(citytile => citytile.pos.x === x && citytile.pos.y === y)
   }
 }
 
@@ -67,26 +87,13 @@ export default class CreditAssignment {
 
         // Attribution for city
         if (parts[0] === 'bcity') {
-          const cityTileId = `ct_${graph.nextCityTileId++}`
           const parentId = parts[1]
-          let parent = graph.units[parentId]
-          if (!parent) {
-            parent = graph.units[parentId] = {
-              parent: null,
-              reward: 0,
-              id: parentId,
-            }
-          }
+          let parent = graph.units[parentId] || graph.addUnit(parentId)
 
           const parentUnit = serializedState.teamStates[0].units[parentId] || serializedState.teamStates[1].units[parentId]
           if (!parentUnit) throw new Error(`Could not find parent unit ${parentId}`)
 
-          graph.cityTiles[cityTileId] = {
-            parent,
-            reward: 0,
-            pos: new Position(parentUnit.x, parentUnit.y),
-            id:cityTileId
-          }
+          graph.addCityTile(parentUnit.x, parentUnit.y, parent)
         }
 
         // Attribution for unit (worker)
@@ -101,23 +108,10 @@ export default class CreditAssignment {
 
           const unitId = unitEntry[0]
 
-          let cityTile = graph.getCityTile(x, y)
-          if (!cityTile) {
-            const cityTileId = `ct_${graph.nextCityTileId++}`
-            cityTile = graph.cityTiles[cityTileId] = {
-              parent: null,
-              reward: 0,
-              pos: new Position(x, y),
-              id: cityTileId,
-            }
-          }
+          let cityTile = graph.getCityTile(x, y) || graph.addCityTile(x, y)
           if (!cityTile) throw new Error(`Could not find or create cityTile at ${x}, ${y}`)
 
-          graph.units[unitId] = {
-            parent: cityTile,
-            reward: 0,
-            id: unitId,
-          }
+          graph.addUnit(unitId, cityTile)
         }
       }
     }
