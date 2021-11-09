@@ -32,14 +32,15 @@ export default class LightLevels {
     }
   }
 
-
   static computeAll(serializedState: SerializedState, augMap: AugMap) {
     LightLevels.computeResources(serializedState, augMap)
+    LightLevels.computeWood(serializedState, augMap)
+    LightLevels.computeCoal(serializedState, augMap)
+    LightLevels.computeUranium(serializedState, augMap)
   }
 
-
   /** Computes and writes all resource light level data into the given AugMap */
-  static computeResources(serializedState: SerializedState, augMap: AugMap) {
+  static computeResources(serializedState: SerializedState, augMap: AugMap): void {
     const width = augMap.length
     const resources = getResourcesSerialized(serializedState.map, width)
 
@@ -62,6 +63,46 @@ export default class LightLevels {
           const curLightLevel = augCell.resourceLevel
           const newLightLevel = Math.max(curLightLevel + luminosity + attenuation, 0, curLightLevel)
           augCell.resourceLevel = newLightLevel
+        }
+      }
+    }
+  }
+
+  static computeWood(serializedState: SerializedState, augMap: AugMap): void {
+    LightLevels.computeSpecificResource(serializedState, augMap, 'wood', 'woodLevel')
+  }
+
+  static computeCoal(serializedState: SerializedState, augMap: AugMap): void {
+    LightLevels.computeSpecificResource(serializedState, augMap, 'coal', 'coalLevel')
+  }
+
+  static computeUranium(serializedState: SerializedState, augMap: AugMap): void {
+    LightLevels.computeSpecificResource(serializedState, augMap, 'uranium', 'uraniumLevel')
+  }
+
+  static computeSpecificResource(
+    serializedState: SerializedState,
+    augMap: AugMap,
+    resourceType: string,
+    channel: keyof AugMapCell,
+  ): void {
+    const width = augMap.length
+    const resources = getResourcesSerialized(serializedState.map, width)
+
+    for (const resourceCell of resources) {
+      if (!resourceCell.resource || resourceCell.resource.type !== resourceType) continue
+      const brightness: number = GAME_CONSTANTS.PARAMETERS.RESOURCE_TO_FUEL_RATE[resourceCell.resource.type.toUpperCase()]
+      const luminosity = brightness * resourceCell.resource.amount
+
+      for (let y = 0; y < width; y++) {
+        for (let x = 0; x < width; x++) {
+          const pos = new Position(x, y)
+          const augCell = augMap[y][x]
+          const distance = pos.distanceTo(resourceCell.pos)
+          const attenuation = -100 * brightness * distance // linear, proportional to cost of building city
+          const curLightLevel = augCell[channel]
+          const newLightLevel = Math.max(curLightLevel + luminosity + attenuation, 0, curLightLevel)
+          augCell[channel] = newLightLevel
         }
       }
     }

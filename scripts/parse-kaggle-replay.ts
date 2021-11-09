@@ -15,7 +15,7 @@ export function parseKaggleReplay(replay: KaggleReplay): AugReplay {
     const width = obs.width
     const serializedState = parseKaggleObs(obs)
     const augMap = initAugMap(width)
-    LightLevels.computeResources(serializedState, augMap)
+    LightLevels.computeAll(serializedState, augMap)
     augReplay.turns.push(augMap)
   }
 
@@ -47,12 +47,25 @@ function main() {
   const replay = JSON.parse(readFileSync(path, 'utf8')) as KaggleReplay
   const augReplay = parseKaggleReplay(replay)
   console.log('Constructed augmented replay with turns:', augReplay.turns.length)
-  // let i = 0;
-  // for (const turn of augReplay.turns) {
-  //   console.log(`Turn ${i++}`)
-  //   LightLevels.printLightMap(turn, 'resourceLevel')
-  //   console.log()
-  // }
+  let i = 0;
+  for (const turn of augReplay.turns) {
+    console.log(`Turn ${i++}`)
+
+    console.log('ALL:')
+    LightLevels.printLightMap(turn, 'resourceLevel')
+
+    console.log('WOOD:')
+    LightLevels.printLightMap(turn, 'woodLevel')
+
+    console.log('COAL:')
+    LightLevels.printLightMap(turn, 'coalLevel')
+
+    console.log('URANIUM:')
+    LightLevels.printLightMap(turn, 'uraniumLevel')
+
+    console.log()
+    if (i > 0) break
+  }
 }
 
 main()
