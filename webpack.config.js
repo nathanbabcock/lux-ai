@@ -4,7 +4,6 @@ module.exports = {
     'tree-search': './agents/tree-search.ts',
     'assignment-solver': './agents/assignment-solver.ts',
     'sim': './agents/sim.ts',
-    'parse-kaggle-replay': './scripts/parse-kaggle-replay.ts',
   },
   target: 'node',
   module: {

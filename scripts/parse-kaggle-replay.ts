@@ -1,7 +1,6 @@
-import { parseKaggleObs } from '@lux-ai/2021-challenge/lib/es5/Replay/parseKaggleObs'
 import { readFileSync } from 'fs'
 import { KaggleReplay } from '../helpers/KaggleReplay'
-
+import { parseKaggleObs } from '../helpers/parseKaggleObs'
 
 export type AugMapCell = {
   woodLevel: number
