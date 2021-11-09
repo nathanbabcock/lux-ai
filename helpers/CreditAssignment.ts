@@ -33,14 +33,25 @@ export class AttributionGraph {
     console.log('Units:')
     for (const unitId in this.units) {
       const unit = this.units[unitId]
-      console.log(`${unitId}: parent = ${unit.parent === null ? 'null' : unit.parent.id}`)
+      console.log(`• ${unitId}: parent = ${unit.parent === null ? 'null' : unit.parent.id}, reward = ${unit.reward}`)
     }
 
     console.log('CityTiles:')
     for (const cityTileId in this.cityTiles) {
       const cityTile = this.cityTiles[cityTileId]
-      console.log(`${cityTileId}: parent = ${cityTile.parent === null ? 'null' : cityTile.parent.id}`)
+      console.log(`• ${cityTileId} (${cityTile.pos.x}, ${cityTile.pos.y}): parent = ${cityTile.parent === null ? 'null' : cityTile.parent.id}, reward = ${cityTile.reward}`)
     }
+  }
+
+  /**
+   * Since citytile IDs are artificial,
+   * use this method to find one by position
+   * 
+   * In the case of multiple citytiles re-built on the same position,
+   * it chooses the latest added one (i.e. the one with the highest id)
+   */
+  getCityTile(x: number, y: number): CityTileAttribution | null {
+    return Object.values(this.cityTiles).reverse().find(citytile => citytile.pos.x === x && citytile.pos.y === y)
   }
 }
 
@@ -90,7 +101,7 @@ export default class CreditAssignment {
 
           const unitId = unitEntry[0]
 
-          let cityTile = Object.values(graph.cityTiles).find(citytile => citytile.pos.x === x && citytile.pos.y === y)
+          let cityTile = graph.getCityTile(x, y)
           if (!cityTile) {
             const cityTileId = `ct_${graph.nextCityTileId++}`
             cityTile = graph.cityTiles[cityTileId] = {
@@ -108,6 +119,29 @@ export default class CreditAssignment {
             id: unitId,
           }
         }
+      }
+    }
+  }
+
+  /**
+   * Given the very last state in a game (and assuming game over),
+   * assign reward = 1 to each citytile remaining,
+   * and propagate the reward up the attribution tree.
+   */
+  static backPropagation(serializedState: SerializedState, graph: AttributionGraph): void {
+    const cityTiles = Object.values(serializedState.cities).flatMap(city => city.cityCells)
+
+    for (const cityTile of cityTiles) {
+      let cityTileAttribution = graph.getCityTile(cityTile.x, cityTile.y)
+      if (!cityTileAttribution) {
+        console.warn(`Couldn't find any attribution for city tile @ ${cityTile.x}, ${cityTile.y}`)
+        continue
+      }
+      const reward = 1
+      let cur: CityTileAttribution | UnitAttribution = cityTileAttribution
+      while (cur) {
+        cur.reward += reward
+        cur = cur.parent
       }
     }
   }

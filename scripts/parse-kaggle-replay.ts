@@ -9,15 +9,16 @@ import { parseKaggleObs } from '../helpers/parseKaggleObs'
  * augmented with several "light-map" feature layers for use in training.
  */
 export function parseKaggleReplay(replay: KaggleReplay): AugReplay {
-  const attributionGraph = new AttributionGraph()
+  const graph = new AttributionGraph()
 
   const augReplay = {
     turns: [],
-    attributionGraph,
+    attributionGraph: graph,
   }
 
   let i = 0
   for (const step of replay.steps) {
+    i++
     const obs = step[0].observation
     const width = obs.width
     const serializedState = parseKaggleObs(obs)
@@ -25,13 +26,10 @@ export function parseKaggleReplay(replay: KaggleReplay): AugReplay {
     LightLevels.computeAll(serializedState, augMap)
     CreditAssignment.computeStep(step, serializedState, augReplay.attributionGraph)
 
-    if (i++ < 15) {
-      console.log(`Attribution at step ${i}:`)
-      attributionGraph.print()
-      console.log()
-    }
-
     augReplay.turns.push(augMap)
+
+    if (step === replay.steps[replay.steps.length - 1])
+      CreditAssignment.backPropagation(serializedState, graph)
   }
 
   return augReplay
@@ -58,29 +56,32 @@ function initAugMap(width: number): AugMap {
 }
 
 function main() {
-  const path = process.argv[2] || 'replays/toad-brigade-vs-rl-is-all-you-need-30267977.json'
+  const path = process.argv[2] || 'replays/30267977.json'
   const replay = JSON.parse(readFileSync(path, 'utf8')) as KaggleReplay
   const augReplay = parseKaggleReplay(replay)
   console.log('Constructed augmented replay with turns:', augReplay.turns.length)
-  // let i = 0;
-  // for (const turn of augReplay.turns) {
-  //   console.log(`Turn ${i++}`)
+  let i = 0;
+  for (const turn of augReplay.turns) {
+    console.log(`Turn ${i++}`)
 
-  //   console.log('ALL:')
-  //   LightLevels.printLightMap(turn, 'resourceLevel')
+    console.log('ALL:')
+    LightLevels.printLightMap(turn, 'resourceLevel')
 
-  //   console.log('WOOD:')
-  //   LightLevels.printLightMap(turn, 'woodLevel')
+    console.log('WOOD:')
+    LightLevels.printLightMap(turn, 'woodLevel')
 
-  //   console.log('COAL:')
-  //   LightLevels.printLightMap(turn, 'coalLevel')
+    console.log('COAL:')
+    LightLevels.printLightMap(turn, 'coalLevel')
 
-  //   console.log('URANIUM:')
-  //   LightLevels.printLightMap(turn, 'uraniumLevel')
+    console.log('URANIUM:')
+    LightLevels.printLightMap(turn, 'uraniumLevel')
 
-  //   console.log()
-  //   if (i > 0) break
-  // }
+    console.log()
+    if (i > 0) break
+  }
+
+  console.log('Final attribution graph with rewards:')
+  augReplay.attributionGraph.print()
 }
 
 main()
