@@ -7,6 +7,7 @@ export type UnitAttribution = {
   parent: CityTileAttribution | null
   reward: number
   id: string
+  createdTurn: number
 }
 
 export type CityTileAttribution = {
@@ -15,6 +16,7 @@ export type CityTileAttribution = {
   reward: number
   pos: Position
   id: string
+  createdTurn: number
   // cityId: string
 }
 
@@ -40,22 +42,24 @@ export class AttributionGraph {
     return Object.values(this.cityTiles).reverse().find(citytile => citytile.pos.x === x && citytile.pos.y === y)
   }
 
-  addCityTile(x: number, y: number, parent: UnitAttribution | null = null): CityTileAttribution {
+  addCityTile(x: number, y: number, createdTurn: number = 0, parent: UnitAttribution | null = null): CityTileAttribution {
     const cityTileId = `ct_${this.nextCityTileId++}`
     const cityTile = this.cityTiles[cityTileId] = {
       parent,
       reward: 0,
       pos: new Position(x, y),
       id: cityTileId,
+      createdTurn,
     }
     return cityTile
   }
 
-  addUnit(id: string, parent: CityTileAttribution | null = null): UnitAttribution {
+  addUnit(id: string, createdTurn: number = 0,  parent: CityTileAttribution | null = null): UnitAttribution {
     const unit = this.units[id] = {
       parent,
       reward: 0,
       id,
+      createdTurn,
     }
     return unit
   }
@@ -64,13 +68,13 @@ export class AttributionGraph {
     console.log('Units:')
     for (const unitId in this.units) {
       const unit = this.units[unitId]
-      console.log(`• ${unitId}: parent = ${unit.parent === null ? 'null' : unit.parent.id}, reward = ${unit.reward}`)
+      console.log(`• ${unitId}: created = ${unit.createdTurn}, parent = ${unit.parent === null ? 'null' : unit.parent.id}, reward = ${unit.reward}`)
     }
 
     console.log('CityTiles:')
     for (const cityTileId in this.cityTiles) {
       const cityTile = this.cityTiles[cityTileId]
-      console.log(`• ${cityTileId} (${cityTile.pos.x}, ${cityTile.pos.y}): parent = ${cityTile.parent === null ? 'null' : cityTile.parent.id}, reward = ${cityTile.reward}`)
+      console.log(`• ${cityTileId} (${cityTile.pos.x}, ${cityTile.pos.y}): created = ${cityTile.createdTurn}, parent = ${cityTile.parent === null ? 'null' : cityTile.parent.id}, reward = ${cityTile.reward}`)
     }
   }
 }
@@ -81,6 +85,7 @@ export default class CreditAssignment {
     serializedState: SerializedState,
     graph: AttributionGraph,
   ): void {
+    const turn = (step[0].observation as any).step
     for (const playerTurn of step) {
       for (const action of playerTurn.action) {
         const parts = action.split(' ')
@@ -93,7 +98,7 @@ export default class CreditAssignment {
           const parentUnit = serializedState.teamStates[0].units[parentId] || serializedState.teamStates[1].units[parentId]
           if (!parentUnit) throw new Error(`Could not find parent unit ${parentId}`)
 
-          graph.addCityTile(parentUnit.x, parentUnit.y, parent)
+          graph.addCityTile(parentUnit.x, parentUnit.y, turn, parent)
         }
 
         // Attribution for unit (worker)
@@ -111,7 +116,7 @@ export default class CreditAssignment {
           let cityTile = graph.getCityTile(x, y) || graph.addCityTile(x, y)
           if (!cityTile) throw new Error(`Could not find or create cityTile at ${x}, ${y}`)
 
-          graph.addUnit(unitId, cityTile)
+          graph.addUnit(unitId, turn, cityTile)
         }
       }
     }
