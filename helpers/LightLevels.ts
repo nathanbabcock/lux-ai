@@ -2,6 +2,7 @@ import { SerializedState } from '@lux-ai/2021-challenge'
 import { getResourcesSerialized } from './helpers'
 import GAME_CONSTANTS from '../lux/game_constants.json'
 import { Position } from '../lux/Position'
+import { AttributionGraph } from './CreditAssignment'
 
 export type AugMapCell = {
   woodLevel: number
@@ -18,7 +19,7 @@ export type AugMap = AugMapCell[][]
 
 export type AugReplay = {
   turns: AugMap[]
-  // attributionGraph
+  attributionGraph: AttributionGraph
 }
 
 export default class LightLevels {
