@@ -1,7 +1,6 @@
-import { Game } from '@lux-ai/2021-challenge'
-import { SSL_OP_LEGACY_SERVER_CONNECT } from 'constants'
+import { Game, SerializedState } from '@lux-ai/2021-challenge'
 import type { GameState } from '../lux/Agent'
-import type { Cell } from '../lux/Cell'
+import { Cell } from '../lux/Cell'
 import { City } from '../lux/City'
 import { CityTile } from '../lux/CityTile'
 import type { GameMap } from '../lux/GameMap'
@@ -163,6 +162,24 @@ export function getResources(gameMap: GameMap): Array<Cell> {
     for (let x = 0; x < gameMap.width; x++) {
       const cell = gameMap.getCell(x, y)
       if (cell.hasResource()) {
+        resourceTiles.push(cell)
+      }
+    }
+  }
+  return resourceTiles
+}
+
+export function getResourcesSerialized(
+  serializedMap: SerializedState['map'],
+  width: number,
+): Cell[] {
+  const resourceTiles: Cell[] = []
+  for (let y = 0; y < width; y++) {
+    for (let x = 0; x < width; x++) {
+      const serializedCell = serializedMap[y][x]
+      if (serializedCell.resource) {
+        const cell = new Cell(x, y)
+        cell.resource = serializedCell.resource
         resourceTiles.push(cell)
       }
     }

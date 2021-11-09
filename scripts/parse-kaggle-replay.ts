@@ -1,23 +1,7 @@
 import { readFileSync } from 'fs'
 import { KaggleReplay } from '../helpers/KaggleReplay'
+import LightLevels, { AugMap, AugReplay } from '../helpers/LightLevels'
 import { parseKaggleObs } from '../helpers/parseKaggleObs'
-
-export type AugMapCell = {
-  woodLevel: number
-  coalLevel: number
-  uraniumLevel: number
-  enemyCityLevel: number
-  enemyUnitLevel: number
-  friendlyCityLevel: number
-  friendlyUnitLevel: number
-}
-
-export type AugMap = AugMapCell[][]
-
-export type AugReplay = {
-  turns: AugMap[]
-  // attributionGraph
-}
 
 /**
  * Take a Kaggle replay file and convert it to a full Lux game map,
@@ -31,11 +15,8 @@ export function parseKaggleReplay(replay: KaggleReplay): AugReplay {
     const width = obs.width
     const serializedState = parseKaggleObs(obs)
     const augMap = initAugMap(width)
+    LightLevels.computeResources(serializedState, augMap)
     augReplay.turns.push(augMap)
-
-    for (const player of step) {
-      // asdf
-    }
   }
 
   return augReplay
@@ -50,6 +31,7 @@ function initAugMap(width: number): AugMap {
         woodLevel: 0,
         coalLevel: 0,
         uraniumLevel: 0,
+        resourceLevel: 0,
         enemyCityLevel: 0,
         enemyUnitLevel: 0,
         friendlyCityLevel: 0,
@@ -65,6 +47,12 @@ function main() {
   const replay = JSON.parse(readFileSync(path, 'utf8')) as KaggleReplay
   const augReplay = parseKaggleReplay(replay)
   console.log('Constructed augmented replay with turns:', augReplay.turns.length)
+  // let i = 0;
+  // for (const turn of augReplay.turns) {
+  //   console.log(`Turn ${i++}`)
+  //   LightLevels.printLightMap(turn, 'resourceLevel')
+  //   console.log()
+  // }
 }
 
 main()
