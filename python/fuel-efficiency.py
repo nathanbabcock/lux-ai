@@ -1,3 +1,8 @@
+'''
+Fuel efficiency sample dataset
+From https://www.tensorflow.org/tutorials/keras/regression
+'''
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -26,7 +31,6 @@ dataset = raw_dataset.copy()
 print('Dataset tail preview')
 print(dataset.tail())
 print()
-
 
 print('Dataset N/A values before dropping')
 print(dataset.isna().sum())
@@ -91,7 +95,6 @@ history = horsepower_model.fit(
   # Calculate validation results on 20% of the training data.
   validation_split = 0.2
 )
-
 
 hist = pd.DataFrame(history.history)
 hist['epoch'] = history.epoch
