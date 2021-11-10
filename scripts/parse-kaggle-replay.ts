@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs'
+import { readdirSync, readFileSync, writeFileSync } from 'fs'
 import CreditAssignment, { AttributionGraph } from '../helpers/CreditAssignment'
 import { KaggleReplay } from '../helpers/KaggleReplay'
 import LightLevels, { AugMap, AugReplay } from '../helpers/LightLevels'
@@ -97,16 +97,16 @@ function printAugMap(augReplay: AugReplay) {
  * and accumulated (direct and indirect) rewards by end of game
  */
 export type TrainingData = {
-  createdTurn: number
+  turn: number
   // team?: 0 | 1
   woodLevel: number
   coalLevel: number
   uraniumLevel: number
   resourceLevel: number
-  enemyCityLevel: number
-  enemyUnitLevel: number
-  friendlyCityLevel: number
-  friendlyUnitLevel: number
+  // enemyCityLevel: number
+  // enemyUnitLevel: number
+  // friendlyCityLevel: number
+  // friendlyUnitLevel: number
   reward: number
 }
 
@@ -122,15 +122,15 @@ function createTrainingData(augReplay: AugReplay): TrainingData[] {
     if (!map) throw new Error(`Could not find cell map[${cityTile.pos.y}][${cityTile.pos.x}] on turn ${turn}`)
 
     trainingData.push({
-      createdTurn: turn,
+      turn: turn,
       woodLevel: cell.woodLevel,
       coalLevel: cell.coalLevel,
       uraniumLevel: cell.uraniumLevel,
       resourceLevel: cell.resourceLevel,
-      enemyCityLevel: cell.enemyCityLevel,
-      enemyUnitLevel: cell.enemyUnitLevel,
-      friendlyCityLevel: cell.friendlyCityLevel,
-      friendlyUnitLevel: cell.friendlyUnitLevel,
+      // enemyCityLevel: cell.enemyCityLevel,
+      // enemyUnitLevel: cell.enemyUnitLevel,
+      // friendlyCityLevel: cell.friendlyCityLevel,
+      // friendlyUnitLevel: cell.friendlyUnitLevel,
       reward: cityTile.reward,
     })
   }
@@ -138,8 +138,7 @@ function createTrainingData(augReplay: AugReplay): TrainingData[] {
   return trainingData
 }
 
-function main() {
-  const path = process.argv[2] || 'replays/30267977.json'
+function parseFile(path: string) {
   const replay = JSON.parse(readFileSync(path, 'utf8')) as KaggleReplay
   console.log(`Read Kaggle replay from ${path}`)
   const augReplay = parseKaggleReplay(replay)
@@ -155,6 +154,19 @@ function main() {
 
   writeFileSync(augPath, JSON.stringify(trainingData, null, 2))
   console.log(`Wrote augmented replay to ${augPath}`)
+}
+
+function main() {
+  //const path = process.argv[2] || 'replays/30267977.json'
+
+  const folderPath = '../lux-ai-top-episodes'
+  const files = readdirSync(folderPath)
+  for (const file of files) {
+    if (file.includes('-aug')) continue
+    const filePath = `${folderPath}/${file}`
+    console.log(`Parsing ${filePath}`)
+    parseFile(filePath)
+  }
 }
 
 main()

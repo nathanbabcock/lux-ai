@@ -86,7 +86,9 @@ export default class CreditAssignment {
     graph: AttributionGraph,
   ): void {
     const turn = (step[0].observation as any).step
+    if (!step) return
     for (const playerTurn of step) {
+      if (!playerTurn || !playerTurn.action) continue
       for (const action of playerTurn.action) {
         const parts = action.split(' ')
 
@@ -96,7 +98,12 @@ export default class CreditAssignment {
           let parent = graph.units[parentId] || graph.addUnit(parentId)
 
           const parentUnit = serializedState.teamStates[0].units[parentId] || serializedState.teamStates[1].units[parentId]
-          if (!parentUnit) throw new Error(`Could not find parent unit ${parentId}`)
+          if (!parentUnit) {
+            console.warn(`Could not find parent unit ${parentId}`)
+            // console.warn(`Step = ${turn}, action = ${action}`)
+            // console.warn(`This could happen if the unit died on the turn it was about to create a city`)
+            continue
+          }
 
           graph.addCityTile(parentUnit.x, parentUnit.y, turn, parent)
         }
@@ -109,7 +116,12 @@ export default class CreditAssignment {
           const teamStates = [serializedState.teamStates[0], serializedState.teamStates[1]]
           const units = teamStates.flatMap(teamState => Object.entries(teamState.units))
           const unitEntry = units.find(([, unit]) => unit.x === x && unit.y === y)
-          if (!unitEntry) throw new Error(`Could not find unit at ${x}, ${y}`)
+          if (!unitEntry) {
+            console.warn(`Could not find unit @ ${x}, ${y}`)
+            // console.warn(`Step = ${turn}, action = ${action}`)
+            // console.warn(`This could happen if citytile + unit dies on same turn it spawns`)
+            continue
+          }
 
           const unitId = unitEntry[0]
 
