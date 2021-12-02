@@ -3,12 +3,12 @@ import numpy as np
 import torch
 from lux.game import Game
 
-# path = '/kaggle_simulations/agent' if os.path.exists('/kaggle_simulations') else '.'
-model = torch.jit.load(f'./model.pth')
+path = '/kaggle_simulations/agent' if os.path.exists('/kaggle_simulations') else '.'
+model = torch.jit.load(f'{path}/model.pth')
 model.eval()
 
 def make_input(obs, unit_id):
-  width, height = obs['width'], obs['height']
+  width, height = obs.width, obs.height
   x_shift = (32 - width) // 2
   y_shift = (32 - height) // 2
   cities = {}
@@ -89,7 +89,7 @@ def get_game_state(observation):
     game_state = Game()
     game_state._initialize(observation["updates"])
     game_state._update(observation["updates"][2:])
-    game_state.id = observation["player"]
+    game_state.id = observation.player
   else:
     game_state._update(observation["updates"])
   return game_state
@@ -140,7 +140,7 @@ def agent(observation, configuration):
   # Worker Actions
   dest = []
   for unit in player.units:
-    if unit.can_act() and (game_state.turn % 40 < 30 or not in_city(unit.pos)):
+    if unit.can_act() and (game_state.turn % 40 < 30 or not in_city(unit.pos)) and hasattr(observation, 'width'):
       state = make_input(observation, unit.id)
       with torch.no_grad():
         p = model(torch.from_numpy(state).unsqueeze(0))
