@@ -6,11 +6,7 @@ import numpy as np
 from lux.game import Game
 from kaggle_environments import make
 from functools import partial
-
-# 2-input XOR inputs and expected outputs.
-xor_inputs = [(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
-xor_outputs = [   (0.0,),     (1.0,),     (1.0,),     (0.0,)]
-
+from typing import Dict
 
 def make_input(obs, unit_id):
   width, height = obs.width, obs.height
@@ -83,7 +79,7 @@ def make_input(obs, unit_id):
   # Map Size
   b[19, x_shift:32 - x_shift, y_shift:32 - y_shift] = 1
 
-  return b
+  return b.flatten()
 
 game_state = None
 def get_game_state(observation):
@@ -119,7 +115,7 @@ def get_action(policy, unit, dest):
       
   return unit.move('c'), unit.pos
 
-def neatAgent(nn: neat.nn, observation, configuration):
+def neatAgent(nn: neat.nn, observation):
   global game_state
   
   game_state = get_game_state(observation)  
@@ -151,18 +147,36 @@ def neatAgent(nn: neat.nn, observation, configuration):
 
   return actions
 
+class Observation(Dict[str, any]):
+  def __init__(self, player=0) -> None:
+    self.player = player
+    # self.updates = []
+    # self.step = 0
+observation = Observation()
+observation["updates"] = []
+observation["step"] = 0
+
 def luxMatch(agent0, agent1):
   env = make("lux_ai_2021", configuration={"loglevel": 2, "annotations": True}, debug=True)
   
   while not env.done:
-    agent0_actions = agent0(env.state[-1].observation)
-    agent1_actions = agent1(env.state[-1].observation)
-    actions = agent0_actions + agent1_actions
-    env.step(actions)
+    if env.state is None or len(env.steps) == 1 or env.done:
+      env.reset(2)
+    obs = env.state[0].observation
+    # print('Observation', obs)
+    agent0_actions = agent0(obs)
+    agent1_actions = agent1(obs)
+    env.step([agent0_actions, agent1_actions])
 
-  return env.rewards
+  # env.run([])
+  replay = env.toJSON()
+  # print("REPLAYYYYY")
+  # print(replay)
+  return replay['rewards']
 
 def eval_genomes(genomes, config):
+  print('evaluating genomes')
+
   for genome_id, genome in genomes:
     genome.fitness = 0
 
@@ -192,6 +206,8 @@ def eval_genomes_xor(genomes, config):
 
 
 def run(config_file):
+  print('Starting up')
+
   # Load configuration.
   config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
             neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -210,15 +226,15 @@ def run(config_file):
   winner = p.run(eval_genomes, 1)
 
   # Display the winning genome.
-  print('\nBest genome:\n{!s}'.format(winner))
+  # print('\nBest genome:\n{!s}'.format(winner))
 
   # Show output of the most fit genome against training data.
-  print('\nOutput:')
-  winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
+  # print('\nOutput:')
+  # winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
   
-  print(f'\nBest genome:\n{winner.fitness}')
+  print(f'\nBest genome fitness:\n{winner.fitness}')
 
-  visualize.draw_net(config, winner, True)
+  # visualize.draw_net(config, winner, True)
   visualize.plot_stats(stats, ylog=False, view=True)
   visualize.plot_species(stats, view=True)
 
