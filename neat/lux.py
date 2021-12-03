@@ -1,11 +1,16 @@
+from __future__ import print_function
 import os
+import neat
+import visualize
 import numpy as np
-import torch
 from lux.game import Game
+from kaggle_environments import make
+from functools import partial
 
-path = '/kaggle_simulations/agent' if os.path.exists('/kaggle_simulations') else '.'
-model = torch.jit.load(f'{path}/model.pth')
-model.eval()
+# 2-input XOR inputs and expected outputs.
+xor_inputs = [(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
+xor_outputs = [   (0.0,),     (1.0,),     (1.0,),     (0.0,)]
+
 
 def make_input(obs, unit_id):
   width, height = obs.width, obs.height
@@ -93,14 +98,12 @@ def get_game_state(observation):
     game_state._update(observation["updates"])
   return game_state
 
-
 def in_city(pos):  
   try:
     city = game_state.map.get_cell_by_pos(pos).citytile
     return city is not None and city.team == game_state.id
   except:
     return False
-
 
 def call_func(obj, method, args=[]):
   return getattr(obj, method)(*args)
@@ -116,8 +119,7 @@ def get_action(policy, unit, dest):
       
   return unit.move('c'), unit.pos
 
-
-def agent(observation, configuration):
+def neatAgent(nn: neat.nn, observation, configuration):
   global game_state
   
   game_state = get_game_state(observation)  
@@ -141,13 +143,92 @@ def agent(observation, configuration):
   for unit in player.units:
     if unit.can_act() and (game_state.turn % 40 < 30 or not in_city(unit.pos)) and hasattr(observation, 'width'):
       state = make_input(observation, unit.id)
-      with torch.no_grad():
-        p = model(torch.from_numpy(state).unsqueeze(0))
+      p = nn.activate(state)
 
-      policy = p.squeeze(0).numpy()
-
-      action, pos = get_action(policy, unit, dest)
+      action, pos = get_action(p, unit, dest)
       actions.append(action)
       dest.append(pos)
 
   return actions
+
+def luxMatch(agent0, agent1):
+  env = make("lux_ai_2021", configuration={"loglevel": 2, "annotations": True}, debug=True)
+  
+  while not env.done:
+    agent0_actions = agent0(env.state[-1].observation)
+    agent1_actions = agent1(env.state[-1].observation)
+    actions = agent0_actions + agent1_actions
+    env.step(actions)
+
+  return env.rewards
+
+def eval_genomes(genomes, config):
+  for genome_id, genome in genomes:
+    genome.fitness = 0
+
+  for genome0_id, genome0 in genomes:
+    for genome1_id, genome1 in genomes:
+      net0 = neat.nn.FeedForwardNetwork.create(genome0, config)
+      net1 = neat.nn.FeedForwardNetwork.create(genome1, config)
+      agent0 = partial(neatAgent, net0)
+      agent1 = partial(neatAgent, net1)
+      
+      print(f"Evaluating {genome0_id} vs {genome1_id}")
+      rewards = luxMatch(agent0, agent1)
+      print(f"{genome0_id} reward = {rewards[0]}")
+      print(f"{genome1_id} reward = {rewards[1]}")
+      if rewards[0] > rewards[1]:
+        genome0.fitness += 1
+      else:
+        genome1.fitness += 1
+
+def eval_genomes_xor(genomes, config):
+  for genome_id, genome in genomes:
+    genome.fitness = 4.0
+    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    for xi, xo in zip(xor_inputs, xor_outputs):
+      output = net.activate(xi)
+      genome.fitness -= (output[0] - xo[0]) ** 2
+
+
+def run(config_file):
+  # Load configuration.
+  config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+            neat.DefaultSpeciesSet, neat.DefaultStagnation,
+            config_file)
+
+  # Create the population, which is the top-level object for a NEAT run.
+  p = neat.Population(config)
+
+  # Add a stdout reporter to show progress in the terminal.
+  p.add_reporter(neat.StdOutReporter(True))
+  stats = neat.StatisticsReporter()
+  p.add_reporter(stats)
+  # p.add_reporter(neat.Checkpointer(5))
+
+  # Run for up to 300 generations.
+  winner = p.run(eval_genomes, 1)
+
+  # Display the winning genome.
+  print('\nBest genome:\n{!s}'.format(winner))
+
+  # Show output of the most fit genome against training data.
+  print('\nOutput:')
+  winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
+  
+  print(f'\nBest genome:\n{winner.fitness}')
+
+  visualize.draw_net(config, winner, True)
+  visualize.plot_stats(stats, ylog=False, view=True)
+  visualize.plot_species(stats, view=True)
+
+  #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
+  #p.run(eval_genomes, 10)
+
+if __name__ == '__main__':
+  # Determine path to configuration file. This path manipulation is
+  # here so that the script will run successfully regardless of the
+  # current working directory.
+  local_dir = os.path.dirname(__file__)
+  config_path = os.path.join(local_dir, 'neat-lux.cfg')
+  run(config_path)
