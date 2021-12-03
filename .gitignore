@@ -4,3 +4,7 @@ errorlogs
 replays
 submissions
 *.tar.gz
+neat-checkpoint-*
+*.gv
+*.svg
+__pycache__

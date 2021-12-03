@@ -10,12 +10,13 @@
     "build": "tsc",
     "watch": "tsc -w",
     "w": "npm run watch",
-    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay --out=replays/replay.json imitation/agent.py dist/agents/assignment-solver.js",
+    "sim": "lux-ai-2021 --storeLogs=false --statefulReplay --out=replays/replay.json imitation/main.py dist/agents/assignment-solver.js",
     "vis": "lux-ai-vis replays/replay.json",
     "sim-vis": "npm run sim && npm run vis",
-    "tournament": "lux-ai-2021 --storeLogs=false --storeReplay=false --rankSystem=wins --tournament dist/agents/tree-search.js dist/agents/director-expander.js",
+    "tournament": "lux-ai-2021 --storeLogs=false --storeReplay=false --debug=true --rankSystem=wins --tournament dist/agents/tree-search.js dist/agents/director-expander.js",
     "webpack": "webpack --config ./webpack.config.js",
-    "submission": "npm run webpack && tar -czvf submissions/assignment-solver.tar.gz dist main.py && echo \"Dont forget to update main.py with new js file name\""
+    "submission": "npm run webpack && tar -czvf submissions/assignment-solver.tar.gz dist main.py && echo \"Dont forget to update main.py with new js file name\"",
+    "python": "lux-ai-2021 imitation/main.py imitation/main.py --debug=true --storeLogs=false --out=replays/python.json"
   },
   "author": "Nathan Babcock",
   "license": "UNLICENSED",
