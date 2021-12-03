@@ -8,7 +8,7 @@ from kaggle_environments import make
 from functools import partial
 from typing import Dict
 
-def make_input(obs, unit_id):
+def make_input(obs, player_id, unit_id):
   width, height = obs.width, obs.height
   x_shift = (32 - width) // 2
   y_shift = (32 - height) // 2
@@ -36,7 +36,7 @@ def make_input(obs, unit_id):
         # Units
         team = int(strs[2])
         cooldown = float(strs[6])
-        idx = 2 + (team - obs['player']) % 2 * 3
+        idx = 2 + (team - player_id) % 2 * 3
         b[idx:idx + 3, x, y] = (
           1,
           cooldown / 6,
@@ -48,7 +48,7 @@ def make_input(obs, unit_id):
       city_id = strs[2]
       x = int(strs[3]) + x_shift
       y = int(strs[4]) + y_shift
-      idx = 8 + (team - obs['player']) % 2 * 2
+      idx = 8 + (team - player_id) % 2 * 2
       b[idx:idx + 2, x, y] = (
         1,
         cities[city_id]
@@ -64,7 +64,7 @@ def make_input(obs, unit_id):
       # Research Points
       team = int(strs[1])
       rp = int(strs[2])
-      b[15 + (team - obs['player']) % 2, :] = min(rp, 200) / 200
+      b[15 + (team - player_id) % 2, :] = min(rp, 200) / 200
     elif input_identifier == 'c':
       # Cities
       city_id = strs[2]
@@ -82,14 +82,14 @@ def make_input(obs, unit_id):
   return b.flatten()
 
 game_state = None
-def get_game_state(observation):
+def get_game_state(observation, player_id):
   global game_state
   
   if observation["step"] == 0:
     game_state = Game()
     game_state._initialize(observation["updates"])
     game_state._update(observation["updates"][2:])
-    game_state.id = observation.player
+    game_state.id = player_id
   else:
     game_state._update(observation["updates"])
   return game_state
@@ -104,7 +104,6 @@ def in_city(pos):
 def call_func(obj, method, args=[]):
   return getattr(obj, method)(*args)
 
-
 unit_actions = [('move', 'n'), ('move', 's'), ('move', 'w'), ('move', 'e'), ('build_city',)]
 def get_action(policy, unit, dest):
   for label in np.argsort(policy)[::-1]:
@@ -115,11 +114,11 @@ def get_action(policy, unit, dest):
       
   return unit.move('c'), unit.pos
 
-def neatAgent(nn: neat.nn, observation):
+def neatAgent(nn: neat.nn, player_id, observation):
   global game_state
   
-  game_state = get_game_state(observation)  
-  player = game_state.players[observation.player]
+  game_state = get_game_state(observation, player_id)  
+  player = game_state.players[player_id]
   actions = []
   
   # City Actions
@@ -138,7 +137,7 @@ def neatAgent(nn: neat.nn, observation):
   dest = []
   for unit in player.units:
     if unit.can_act() and (game_state.turn % 40 < 30 or not in_city(unit.pos)) and hasattr(observation, 'width'):
-      state = make_input(observation, unit.id)
+      state = make_input(observation, player_id, unit.id)
       p = nn.activate(state)
 
       action, pos = get_action(p, unit, dest)
@@ -147,23 +146,22 @@ def neatAgent(nn: neat.nn, observation):
 
   return actions
 
-class Observation(Dict[str, any]):
-  def __init__(self, player=0) -> None:
-    self.player = player
-    # self.updates = []
-    # self.step = 0
-observation = Observation()
-observation["updates"] = []
-observation["step"] = 0
+# class Observation(Dict[str, any]):
+#   def __init__(self, player=0) -> None:
+#     self.player = player
+#     # self.updates = []
+#     # self.step = 0
+# observation = Observation()
+# observation["updates"] = []
+# observation["step"] = 0
 
 def luxMatch(agent0, agent1):
-  env = make("lux_ai_2021", configuration={"loglevel": 2, "annotations": True}, debug=True)
+  env = make("lux_ai_2021", configuration={"loglevel": 1}, debug=False)
   
   while not env.done:
     if env.state is None or len(env.steps) == 1 or env.done:
       env.reset(2)
     obs = env.state[0].observation
-    # print('Observation', obs)
     agent0_actions = agent0(obs)
     agent1_actions = agent1(obs)
     env.step([agent0_actions, agent1_actions])
@@ -184,8 +182,8 @@ def eval_genomes(genomes, config):
     for genome1_id, genome1 in genomes:
       net0 = neat.nn.FeedForwardNetwork.create(genome0, config)
       net1 = neat.nn.FeedForwardNetwork.create(genome1, config)
-      agent0 = partial(neatAgent, net0)
-      agent1 = partial(neatAgent, net1)
+      agent0 = partial(neatAgent, net0, 0)
+      agent1 = partial(neatAgent, net1, 1)
       
       print(f"Evaluating {genome0_id} vs {genome1_id}")
       rewards = luxMatch(agent0, agent1)
@@ -195,15 +193,6 @@ def eval_genomes(genomes, config):
         genome0.fitness += 1
       else:
         genome1.fitness += 1
-
-def eval_genomes_xor(genomes, config):
-  for genome_id, genome in genomes:
-    genome.fitness = 4.0
-    net = neat.nn.FeedForwardNetwork.create(genome, config)
-    for xi, xo in zip(xor_inputs, xor_outputs):
-      output = net.activate(xi)
-      genome.fitness -= (output[0] - xo[0]) ** 2
-
 
 def run(config_file):
   print('Starting up')
@@ -220,10 +209,10 @@ def run(config_file):
   p.add_reporter(neat.StdOutReporter(True))
   stats = neat.StatisticsReporter()
   p.add_reporter(stats)
-  # p.add_reporter(neat.Checkpointer(5))
+  p.add_reporter(neat.Checkpointer(10))
 
-  # Run for up to 300 generations.
-  winner = p.run(eval_genomes, 1)
+  # Run for up to 30 generations.
+  winner = p.run(eval_genomes, 30)
 
   # Display the winning genome.
   # print('\nBest genome:\n{!s}'.format(winner))
